@@ -1,5 +1,6 @@
-from automations.protonmail import Protonmail
 import asyncio
+
+from automations.protonmail import Protonmail
 
 
 async def main():

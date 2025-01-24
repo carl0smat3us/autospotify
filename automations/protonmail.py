@@ -1,10 +1,25 @@
-import websockets
-from common.user import User
-from exceptions.possible_exceptions import *
-from common.base_playwright import BasePlaywrightAsync
-import settings
 import datetime
-import json
+import os
+import random
+import re
+import time
+
+import requests
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from faker import Faker
+
+import settings
+from common.base_playwright import BasePlaywrightAsync
+from common.user import User
+from exceptions import *
+
+load_dotenv()
+
+TEMPMAIL_API_KEY = os.getenv("TEMPMAIL_API_KEY")
+TEMPMAIL_AUTHORIZATION = os.getenv("TEMPMAIL_AUTHORIZATION")
+
+fake = Faker()
 
 
 class Protonmail(BasePlaywrightAsync):
@@ -13,20 +28,17 @@ class Protonmail(BasePlaywrightAsync):
         self.url = settings.protonmail_registration_address
         self.protonmail_domain = settings.protonmail_domain
         self.tmp_mail = None
+        self.temp_mail_id = None
         self.user = User()
 
     async def set_user_data(self):
-        print("Filling out the fields on the registration page")
-        (
-            await self.page.frame_locator('iframe[title="Email address"]')
-            .get_by_test_id("input-input-element")
-            .fill(self.user.nickname)
-        )
+        await self.page.frame_locator('iframe[title="Email address"]').get_by_test_id(
+            "input-input-element"
+        ).fill(self.user.nickname)
         await self.page.get_by_label("Password", exact=True).fill(self.user.password)
         await self.page.get_by_label("Repeat password").fill(self.user.password)
 
     async def create_account_button_click(self):
-        print("Creating account button pressed")
         await self.page.get_by_role("button", name="Create account").click()
 
     async def try_register_using_temp_mail(self):
@@ -47,68 +59,93 @@ class Protonmail(BasePlaywrightAsync):
         return alert
 
     async def register_with_temporary_email(self):
-        print("Trying to register using temporary email")
         alert = await self.try_register_using_temp_mail()
         if "Please wait a few minutes" in alert:
             await self.page.get_by_role("button", name="Get verification code").click()
         else:
-            while (
-                "Email address verification temporarily disabled for this email domain. "
-                "Please try another verification method"
-            ) in alert:
-
-                self.tmp_mail = await self.switch_temporary_email()
-                alert = await self.try_register_using_temp_mail()
+            await self.switch_temporary_email()
 
     async def switch_temporary_email(self):
-        async with websockets.connect(settings.websocket_uri) as websocket:
-            await websocket.send(json.dumps({"action":"createEmail"}))
-            message = await websocket.recv()
+        email_domains = [
+            "mailshan.com",
+            "driftz.net",
+        ]
 
-            message_dict = json.loads(message)
+        username = fake.user_name()
+        domain = random.choice(email_domains)
 
-            try:
-                if message_dict["status"] == "success":
-                    self.tmp_mail = message_dict["email"]
-                    return
-                await self.switch_temporary_email()
-            except Exception as e:
-                print(e)
-                await self.switch_temporary_email()
+        response = requests.post(
+            "https://tempmail-so.p.rapidapi.com/inboxes",
+            headers={
+                "Authorization": TEMPMAIL_AUTHORIZATION,
+                "Content-Type": "application/json",
+                "x-rapidapi-host": "tempmail-so.p.rapidapi.com",
+                "x-rapidapi-key": TEMPMAIL_API_KEY,
+            },
+            json={"name": username, "domain": domain, "lifespan": 0},
+        )
+
+        response.raise_for_status()
+        inbox = response.json()
+
+        self.temp_mail_id = inbox["data"]["id"]
+        self.tmp_mail = f"{username}@{domain}"
 
     async def run_registration(self):
         await self.start_session()
         await self.page.goto(self.url)
         await self.set_user_data()
         await self.create_account_button_click()
-
-        # Get temporary email and register
         await self.switch_temporary_email()
         await self.register_with_temporary_email()
-
         await self.insert_verification_code()
         await self.finishing_registration()
         await self.close_session()
 
     async def insert_verification_code(self):
-        async with websockets.connect(settings.websocket_uri) as websocket:
-            # Request the verification code
-            await websocket.send(json.dumps({"action":"fetchVerificationCode"}))
+        time.sleep(120)  # Wait till the email arrive
+        mail_box = requests.get(
+            f"https://tempmail-so.p.rapidapi.com/inboxes/{self.temp_mail_id}/mails",
+            headers={
+                "Authorization": TEMPMAIL_AUTHORIZATION,
+                "Content-Type": "application/json",
+                "x-rapidapi-host": "tempmail-so.p.rapidapi.com",
+                "x-rapidapi-key": TEMPMAIL_API_KEY,
+            },
+        )
 
-            message = await websocket.recv()
+        mail_box.raise_for_status()
+        mail_box = mail_box.json()
 
-            try:
-                if message["status"] == "success":
-                    self.page.get_by_test_id("input-input-element").fill(
-                        message["verificationCode"]
-                    )
-                    self.page.get_by_role("button", name="Verify").click()
-                await self.insert_verification_code()
-            except Exception:
-                await self.insert_verification_code()
+        breakpoint()
+        mail_id = mail_box["data"][0]["id"]
+
+        mail = requests.get(
+            f"https://tempmail-so.p.rapidapi.com/inboxes/{self.temp_mail_id}/mails/{mail_id}",
+            headers={
+                "Authorization": TEMPMAIL_AUTHORIZATION,
+                "Content-Type": "application/json",
+                "x-rapidapi-host": "tempmail-so.p.rapidapi.com",
+                "x-rapidapi-key": TEMPMAIL_API_KEY,
+            },
+        )
+
+        mail.raise_for_status()
+        mail = mail.json()
+        verification_code = self.extract_verification_code(mail["data"]["htmlContent"])
+
+        self.page.get_by_test_id("input-input-element").fill(verification_code)
+        self.page.get_by_role("button", name="Verify").click()
+
+    def extract_verification_code(self, html):
+        soup = BeautifulSoup(html, "html.parser")
+        for span in soup.find_all("span"):
+            text = span.get_text(strip=True)
+            if re.match(r"^\d{6}$", text):
+                return text
+        return None
 
     async def finishing_registration(self):
-        print("Finishing registration...")
         self.page.get_by_role("button", name="Continue").click()
         self.page.get_by_role("button", name="Maybe later").click()
         self.page.get_by_role("button", name="Confirm").click()
@@ -116,13 +153,10 @@ class Protonmail(BasePlaywrightAsync):
     async def create_account(self):
         self.user.generate_new_user()
         await self.run_registration()
-
         protonmail_login, protonmail_password = (
             self.user.nickname + self.protonmail_domain,
             self.user.password,
         )
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         print(protonmail_login, protonmail_password, current_time)
-
         await self.close_session()

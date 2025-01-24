@@ -1,6 +1,7 @@
-from faker import Faker
 import random
 import string
+
+from faker import Faker
 
 fake = Faker()
 

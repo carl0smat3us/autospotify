@@ -16,7 +16,3 @@ class User:
     @property
     def password(self):
         return self.__password
-
-    @property
-    def verification_code(self):
-        return self.email_interface.get_verification_code(self.nickname)
