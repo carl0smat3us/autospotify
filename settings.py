@@ -19,6 +19,10 @@ protonmail_registration_address = (
     "https://account.proton.me/signup?plan=free&billing=24&currency=EUR&language=en"
 )
 
+spotify_login_address = "https://accounts.spotify.com/en/login?continue=https%3A%2F%2Fopen.spotify.com%2F&_locale=fr-FR"
+
 spotify_registration_address = (
     "https://www.spotify.com/fr/signup?forward_url=https%3A%2F%2Fopen.spotify.com%2F"
 )
+
+spotify_playlist_url = "https://open.spotify.com/playlist/5SkZC79Li7OZko6KOzRzWK"

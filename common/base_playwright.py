@@ -1,4 +1,10 @@
+import random
+
 from playwright.async_api import async_playwright
+
+from common.proxies import get_proxies
+
+proxy = get_proxies()
 
 
 class BasePlaywrightAsync:
@@ -11,7 +17,18 @@ class BasePlaywrightAsync:
 
     async def start_session(self):
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=self.headless)
+
+        """
+        "proxy": {
+            "server": random.choice(proxy),
+        },
+        """
+
+        self.browser = await self.playwright.chromium.launch(
+            **{
+                "headless": self.headless,
+            }
+        )
         self.context = await self.browser.new_context()
         self.page = await self.context.new_page()
 
