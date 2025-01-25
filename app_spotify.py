@@ -1,7 +1,8 @@
 import asyncio
 import csv
 
-from automations.spotify_playlist import SpotifyPlalist
+from automations import spotify_playlist_2v
+# from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
 from settings import spotify_playlist_url
 
@@ -35,8 +36,8 @@ async def main(email, password, playlist_url):
     spotify_signup = SpotifySignup(email=email, password=password, headless=True)
     await spotify_signup.run()
 
-    spotify_playlist = SpotifyPlalist(
-        email=email, password=password, playlist_url=playlist_url
+    spotify_playlist = spotify_playlist_2v.main(
+        email=email, password=password
     )
     await spotify_playlist.run()
 
@@ -58,10 +59,14 @@ if __name__ == "__main__":
                     print(
                         f"User {user['email']} has not listened to the playlist. Performing actions on the playlist."
                     )
+
+                    """
+                    SpotifyPlaylist(
+                        user["email"], user["password"], spotify_playlist_url
+                    ).run()
+                    """
                     asyncio.run(
-                        SpotifyPlalist(
-                            user["email"], user["password"], spotify_playlist_url
-                        ).run()
+                        spotify_playlist_2v.main(user["email"], user["password"])
                     )
                 else:
                     print(

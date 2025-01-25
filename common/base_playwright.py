@@ -1,8 +1,11 @@
 import random
 
+from fake_useragent import UserAgent
 from playwright.async_api import async_playwright
 
 from common.proxies import get_proxies
+
+ua = UserAgent(platforms="desktop")
 
 proxy = get_proxies()
 
@@ -29,8 +32,17 @@ class BasePlaywrightAsync:
                 "headless": self.headless,
             }
         )
-        self.context = await self.browser.new_context()
+        self.context = await self.browser.new_context(
+            geolocation=self.generate_fake_location(),
+            permissions=["geolocation"],
+            user_agent=ua["Chrome"],
+        )
         self.page = await self.context.new_page()
+
+    def generate_fake_location(self):
+        latitude = random.uniform(-90, 90)
+        longitude = random.uniform(-180, 180)
+        return {"latitude": latitude, "longitude": longitude}
 
     async def go_to(self, url: str):
         await self.page.goto(url)

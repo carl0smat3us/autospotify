@@ -1,4 +1,4 @@
-import time
+import random
 
 from faker import Faker
 
@@ -9,18 +9,14 @@ from common.user import User
 fake = Faker()
 
 
-class SpotifyPlalist(BasePlaywrightAsync):
+class SpotifyPlaylist(BasePlaywrightAsync):
     def __init__(self, email: str, password: str, playlist_url: str, headless=False):
         self.headless = headless
         self.user = User()
-
         self.url = settings.spotify_login_address
-
         self.email = email
         self.password = password
-
         self.playlist_url = playlist_url
-
         self.faker = Faker()
         self.page = None
 
@@ -40,11 +36,12 @@ class SpotifyPlalist(BasePlaywrightAsync):
     async def run(self):
         await self.start_session()
         await self.page.goto(self.url)
+
         await self.fill_login_page()
 
-        await self.page.wait_for_timeout(30)
-
+        await self.page.wait_for_timeout(3000)
         await self.accept_cookies()
+
         await self.page.goto(self.playlist_url)
-        await self.page.wait_for_timeout(1500000)
+        await self.page.wait_for_timeout(1500000)  # Adjust timeout as needed
         await self.close_session()
