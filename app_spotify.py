@@ -2,9 +2,7 @@ import asyncio
 import csv
 import os
 
-from automations import spotify_playlist_2v
-
-# from automations.spotify_playlist import SpotifyPlaylist
+from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
 from settings import accounts_filename, spotify_track_url
 
@@ -33,10 +31,10 @@ def read_users_from_csv(file_path):
 
 
 async def main(email, password):
-    spotify_signup = SpotifySignup(email=email, password=password, headless=True)
+    spotify_signup = SpotifySignup(email=email, password=password, headless=False)
     await spotify_signup.run()
 
-    spotify_playlist = spotify_playlist_2v.main(email=email, password=password)
+    spotify_playlist = SpotifyPlaylist(email=email, password=password, headless=False)
     await spotify_playlist.run()
 
 
@@ -63,9 +61,7 @@ if __name__ == "__main__":
                         user["email"], user["password"], spotify_track_url
                     ).run()
                     """
-                    asyncio.run(
-                        spotify_playlist_2v.main(user["email"], user["password"])
-                    )
+                    asyncio.run(SpotifyPlaylist(user["email"], user["password"]).run())
                 else:
                     print(
                         f"User {user['email']} has already listened to the playlist. Skipping playlist interaction."

@@ -1,4 +1,4 @@
-accounts_filename = "users.csv"
+accounts_filename = "accounts.csv"
 protonmail_domain = "@proton.me"
 
 protonmail_registration_address = (
