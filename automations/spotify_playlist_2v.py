@@ -1,4 +1,3 @@
-import os
 import random
 import time
 
@@ -10,6 +9,8 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+
+from settings import spotify_login_address, spotify_track_url
 
 supported_timezones = pytz.all_timezones
 
@@ -52,13 +53,7 @@ def main(username, password):
         "no-NO",
     ]
 
-    driver_path = os.path.join(os.getcwd(), "chromedriver.exe")
-
     random_user_agent = random.choice(user_agents)
-
-    spotify_song = (
-        "https://open.spotify.com/track/5hFkGfx038V0LhqI0Uff2J?si=bf290dcc9a994c36"
-    )
     drivers = []
 
     delay = random.uniform(2, 6)
@@ -78,7 +73,7 @@ def main(username, password):
     chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument(f"--user-agent={random_user_agent}")
     chrome_options.add_argument(f"--lang={random_language}")
-    chrome_options.add_argument("--mute-audio")
+    # chrome_options.add_argument("--mute-audio")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_experimental_option(
         "prefs", {"profile.default_content_setting_values.notifications": 2}
@@ -89,7 +84,7 @@ def main(username, password):
     )
 
     try:
-        driver.get("https://www.spotify.com/us/login/")
+        driver.get(spotify_login_address)
 
         username_input = driver.find_element(By.CSS_SELECTOR, "input#login-username")
         password_input = driver.find_element(By.CSS_SELECTOR, "input#login-password")
@@ -102,7 +97,7 @@ def main(username, password):
         ).click()
         time.sleep(delay)
 
-        driver.get(spotify_song)
+        driver.get(spotify_track_url)
         driver.maximize_window()
 
         keyboard.press_and_release("esc")
@@ -114,18 +109,23 @@ def main(username, password):
         except NoSuchElementException:
             try:
                 button = driver.find_element(
-                    By.XPATH,
-                    "//button[contains(@class,'onetrust-close-btn-handler onetrust-close-btn-ui')]",
+                    By.ID,
+                    "onetrust-accept-btn-handler",
                 )
                 button.click()
             except NoSuchElementException:
                 time.sleep(delay2)
 
-        playmusic_xpath = "(//button[@data-testid='play-button']//span)[3]"
-        playmusic = driver.find_element(By.XPATH, playmusic_xpath)
+        time.sleep(10)
+
+        # playmusic_xpath = "(//button[@data-testid='play-button']//span)[3]"
+        playmusic = driver.find_element(
+            By.XPATH,
+            "//*[@id='main']/div/div[2]/div[4]/div/div[2]/div[2]/div/main/section/div[3]/div[2]/div/div/div/button/span",
+        )
         playmusic.click()
 
-        time.sleep(1)
+        time.sleep(10)
 
         print(
             Colors.green,

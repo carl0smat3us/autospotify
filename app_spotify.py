@@ -1,12 +1,12 @@
 import asyncio
 import csv
+import os
 
 from automations import spotify_playlist_2v
+
 # from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
-from settings import spotify_playlist_url
-
-CSV_FILE_PATH = "./users.csv"
+from settings import accounts_filename, spotify_track_url
 
 
 def read_users_from_csv(file_path):
@@ -32,24 +32,22 @@ def read_users_from_csv(file_path):
     return users
 
 
-async def main(email, password, playlist_url):
+async def main(email, password):
     spotify_signup = SpotifySignup(email=email, password=password, headless=True)
     await spotify_signup.run()
 
-    spotify_playlist = spotify_playlist_2v.main(
-        email=email, password=password
-    )
+    spotify_playlist = spotify_playlist_2v.main(email=email, password=password)
     await spotify_playlist.run()
 
 
 if __name__ == "__main__":
     try:
-        users = read_users_from_csv(CSV_FILE_PATH)
+        users = read_users_from_csv(os.path.join(os.getcwd(), accounts_filename))
 
         for user in users:
             if user["created"].lower() == "no":
                 print(f"Creating account for {user['email']}...")
-                asyncio.run(main(user["email"], user["password"], spotify_playlist_url))
+                asyncio.run(main(user["email"], user["password"], spotify_track_url))
             else:
                 print(
                     f"Account already created for {user['email']}, skipping account creation."
@@ -62,7 +60,7 @@ if __name__ == "__main__":
 
                     """
                     SpotifyPlaylist(
-                        user["email"], user["password"], spotify_playlist_url
+                        user["email"], user["password"], spotify_track_url
                     ).run()
                     """
                     asyncio.run(
