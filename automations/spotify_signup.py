@@ -47,7 +47,9 @@ class SpotifySignup(Base):
             username_input = self.driver.find_element(By.ID, "username")
             username_input.send_keys(self.username)
             time.sleep(1)
-            submit_button = self.driver.find_element(By.ID, "submit")
+            submit_button = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
             submit_button.click()
         except Exception as e:
             print(f"Error filling username: {e}")
@@ -58,7 +60,9 @@ class SpotifySignup(Base):
             password_input = self.driver.find_element(By.NAME, "new-password")
             password_input.send_keys(self.password)
             time.sleep(self.delay2)
-            submit_button = self.driver.find_element(By.ID, "submit")
+            submit_button = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
             submit_button.click()
         except Exception as e:
             print(f"Error filling password: {e}")
@@ -89,7 +93,9 @@ class SpotifySignup(Base):
             time.sleep(1)
 
             # Click next
-            submit_button = self.driver.find_element(By.ID, "submit")
+            submit_button = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
             submit_button.click()
         except Exception as e:
             print(f"Error filling personal details: {e}")
@@ -114,10 +120,12 @@ class SpotifySignup(Base):
             time.sleep(self.delay)
 
             # Final step: Create account button click
-            final_submit = self.driver.find_element(By.CSS_SELECTOR, "submit")
+            final_submit = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
             final_submit.click()
 
-            time.sleep(self.delay)
+            time.sleep(10)
 
             print(Colors.green, "Spotify account created!")
             insert_user_to_json(self.username, self.password)

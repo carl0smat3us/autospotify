@@ -3,14 +3,15 @@ import json
 from settings import accounts_filename
 
 
-def read_users_from_json():
+def read_users_from_json(ignore_not_found=False):
     """Read users from the JSON file."""
     try:
         with open(accounts_filename, "r") as file:
             users = json.load(file)
             return users
     except FileNotFoundError:
-        print(f"Error: The file '{accounts_filename}' was not found.")
+        if not ignore_not_found:
+            print(f"Error: The file '{accounts_filename}' was not found.")
         return []
     except json.JSONDecodeError:
         print(f"Error: The file '{accounts_filename}' is not a valid JSON.")
@@ -36,7 +37,7 @@ def insert_user_to_json(username, password):
     If the user already exists, this function does nothing.
     """
     try:
-        users = read_users_from_json()
+        users = read_users_from_json(ignore_not_found=True)
 
         for user in users:
             if user["username"] == username:

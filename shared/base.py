@@ -11,11 +11,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 
-from shared.proxies import get_proxies
+from shared.proxies import get_a_working_proxy
 
 ua = UserAgent(platforms="desktop")
 
-proxy = get_proxies()
+proxy = get_a_working_proxy()
 
 supported_languages = [
     "en-US",
@@ -75,7 +75,7 @@ class Base:
         chrome_options.add_argument("--lang=en-US,en;q=0.9")
         chrome_options.add_argument("--disable-notifications")
         chrome_options.add_argument(f"--user-agent={random.choice(user_agents)}")
-        # chrome_options.add_argument(f"--proxy-server={random.choice(proxy)}")
+        chrome_options.add_argument(f"--proxy-server={proxy}")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
