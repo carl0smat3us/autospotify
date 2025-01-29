@@ -2,4 +2,4 @@
 .env
 .idea
 *__pycache__*
-users.csv
+accounts.csv

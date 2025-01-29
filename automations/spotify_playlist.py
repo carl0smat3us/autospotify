@@ -1,47 +1,73 @@
-import random
+import time
 
 from faker import Faker
+from pystyle import Colors
+from selenium.webdriver.common.by import By
 
 import settings
-from common.base_playwright import BasePlaywrightAsync
-from common.user import User
+from shared.base import Base
 
-fake = Faker()
+faker = Faker()
 
 
-class SpotifyPlaylist(BasePlaywrightAsync):
-    def __init__(self, email: str, password: str, playlist_url: str, headless=False):
-        self.headless = headless
-        self.user = User()
+class SpotifyPlaylist(Base):
+    def __init__(self, username: str, password: str, headless=False):
+        super().__init__(username=username, password=password, headless=headless)
         self.url = settings.spotify_login_address
-        self.email = email
-        self.password = password
-        self.playlist_url = playlist_url
-        self.faker = Faker()
-        self.page = None
 
-    async def accept_cookies(self):
+    def run(self):
         try:
-            await self.page.locator("#onetrust-accept-btn-handler").click()
+            self.driver.get(self.url)
+
+            username_input = self.driver.find_element(
+                By.CSS_SELECTOR, "input#login-username"
+            )
+            password_input = self.driver.find_element(
+                By.CSS_SELECTOR, "input#login-password"
+            )
+
+            username_input.send_keys(self.username)
+            password_input.send_keys(self.password)
+
+            self.driver.find_element(
+                By.CSS_SELECTOR, "button[data-testid='login-button']"
+            ).click()
+
+            time.sleep(15)
+
+            reject_button = self.driver.find_element(
+                By.ID, "onetrust-reject-all-handler"
+            )
+            reject_button.click()
+
+            time.sleep(self.delay2)
+
+            self.driver.get(settings.spotify_track_url)
+
+            time.sleep(10)
+
+            play_button = self.driver.find_element(
+                By.XPATH,
+                "//*[@id='main']/div/div[2]/div[4]/div/div[2]/div[2]/div/main/section/div[3]/div[2]/div/div/div/button/span",
+            )
+
+            play_button.click()
+            time.sleep(10)
+
+            print(f"Username: {self.username} - Listening process has started.")
+
         except Exception as e:
-            print(f"Error accepting cookies: {e}")
+            print(f"An error occurred in the bot system: {str(e)}")
 
-    async def fill_login_page(self):
-        await self.page.get_by_test_id("login-username").fill(self.email)
-        await self.page.wait_for_timeout(1000)
-        await self.page.get_by_test_id("login-password").fill(self.password)
-        await self.page.wait_for_timeout(1000)
-        await self.page.get_by_test_id("login-button").click()
+        self.set_random_timezone()
+        self.set_fake_geolocation()
 
-    async def run(self):
-        await self.start_session()
-        await self.page.goto(self.url)
+        time.sleep(5)
 
-        await self.fill_login_page()
+        print(
+            Colors.blue,
+            "Stream operations are completed. You can stop all transactions by closing the program.",
+        )
 
-        await self.page.wait_for_timeout(3000)
-        await self.accept_cookies()
-
-        await self.page.goto(self.playlist_url)
-        await self.page.wait_for_timeout(1500000)  # Adjust timeout as needed
-        await self.close_session()
+        while True:
+            pass

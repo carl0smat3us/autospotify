@@ -2,89 +2,137 @@ import random
 import time
 
 from faker import Faker
+from pystyle import Colors
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 
 import settings
-from common.base_playwright import BasePlaywrightAsync
-from common.user import User
+from shared.base import Base
+from shared.files import add_user_to_csv
 
-fake = Faker()
+faker = Faker()
+
+email_domains = [
+    "proton.me",
+    "gmail.com",
+    "outlook.com",
+    "outlook.be",
+    "free.fr",
+    "icloud.com",
+]
 
 
-class SpotifySignup(BasePlaywrightAsync):
-    def __init__(self, email: str, password: str, headless=False):
-        self.headless = headless
-        self.user = User()
-
+class SpotifySignup(Base):
+    def __init__(self, headless=False):
+        super().__init__(
+            username=f"{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
+                faker.unique.first_name().lower()}@{random.choice(email_domains)}",
+            password=faker.password(),
+            headless=headless,
+        )
         self.url = settings.spotify_registration_address
 
-        self.email = email
-        self.password = password
-
-        self.faker = Faker()
-        self.page = None
-
-    async def accept_cookies(self):
+    def accept_cookies(self):
         try:
-            await self.page.locator("#onetrust-accept-btn-handler").click()
+            cookies_button = self.driver.find_element(
+                By.ID, "onetrust-accept-btn-handler"
+            )
+            cookies_button.click()
         except Exception as e:
             print(f"Error accepting cookies: {e}")
 
-    async def fill_email(self):
-        await self.page.get_by_placeholder("name@domain.com").fill(self.email)
-        await self.page.wait_for_timeout(1000)
-        await self.page.get_by_test_id("submit").click()
+    def fill_username(self):
+        try:
+            username_input = self.driver.find_element(
+                By.CSS_SELECTOR, "input[placeholder='name@domain.com']"
+            )
+            username_input.send_keys(self.username)
+            time.sleep(1)
+            submit_button = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
+            submit_button.click()
+        except Exception as e:
+            print(f"Error filling username: {e}")
 
-    async def fill_password(self):
-        await self.page.locator("input[name='new-password']").fill(self.password)
-        await self.page.wait_for_timeout(1000)
-        await self.page.get_by_test_id("submit").click()
+    def fill_password(self):
+        try:
+            password_input = self.driver.find_element(By.NAME, "new-password")
+            password_input.send_keys(self.password)
+            time.sleep(self.delay2)
+            submit_button = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
+            submit_button.click()
+        except Exception as e:
+            print(f"Error filling password: {e}")
 
-    async def fill_personal_details(self):
-        # Fill Name
-        await self.page.locator("input[name='displayName']").fill(self.faker.name())
+    def fill_personal_details(self):
+        try:
+            # Fill Name
+            name_input = self.driver.find_element(By.NAME, "displayName")
+            name_input.send_keys(self.faker.name())
 
-        # Fill Birthdate
-        await self.page.locator("input[name='day']").fill(str(random.randint(1, 31)))
-        await self.page.locator("select[name='month']").select_option(label="April")
-        await self.page.locator("input[name='year']").fill(
-            str(random.randint(1970, 2000))
-        )
+            # Fill Birthdate
+            day_input = self.driver.find_element(By.NAME, "day")
+            day_input.send_keys(str(random.randint(1, 31)))
 
-        # Select Gender
-        await self.page.locator("label[for='gender_option_male']").click()
+            month_select = Select(self.driver.find_element(By.NAME, "month"))
+            month_select.select_by_visible_text("April")
 
-        await self.page.wait_for_timeout(1000)
+            year_input = self.driver.find_element(By.NAME, "year")
+            year_input.send_keys(str(random.randint(1970, 2000)))
 
-        # Click next
-        await self.page.get_by_test_id("submit").click()
+            # Select Gender
+            gender_option = self.driver.find_element(
+                By.CSS_SELECTOR, "label[for='gender_option_male']"
+            )
+            gender_option.click()
 
-    async def create_account(self):
-        await self.accept_cookies()
+            time.sleep(1)
 
-        # Step 1: Fill email
-        await self.fill_email()
-        await self.page.wait_for_timeout(5000)
+            # Click next
+            submit_button = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
+            submit_button.click()
+        except Exception as e:
+            print(f"Error filling personal details: {e}")
 
-        # # Step 2: Fill password
-        await self.fill_password()
-        await self.page.wait_for_timeout(5000)
+    def create_account(self):
+        try:
+            time.sleep(5)
+            self.accept_cookies()
+            time.sleep(2)
 
-        # Step 3: Fill personal details
-        await self.fill_personal_details()
-        await self.page.wait_for_timeout(5000)
+            # Step 1: Fill username
+            self.fill_username()
+            time.sleep(self.delay)
 
-        # Final step: Create account button click
-        await self.page.get_by_test_id("submit").click()
+            # Step 2: Fill password
+            self.fill_password()
+            time.sleep(self.delay)
 
-        # Sleep for a while to simulate user behavior (this is a placeholder)
-        time.sleep(10)
+            # Step 3: Fill personal details
+            self.fill_personal_details()
+            time.sleep(self.delay)
 
-        print("--------------------------")
-        print("Spotify account created!!!")
-        print("--------------------------")
+            # Final step: Create account button click
+            final_submit = self.driver.find_element(
+                By.CSS_SELECTOR, "[data-testid='submit']"
+            )
+            final_submit.click()
 
-    async def run(self):
-        await self.start_session()
-        await self.page.goto(self.url)
-        await self.create_account()
-        await self.close_session()
+            time.sleep(self.delay)
+
+            print(Colors.green, "Spotify account created!")
+            add_user_to_csv(self.username, self.password)
+        except Exception as e:
+            print(f"Error during account creation: {e}")
+
+    def run(self):
+        try:
+            self.driver.get(self.url)
+            self.create_account()
+        finally:
+            self.driver.quit()
