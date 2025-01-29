@@ -8,7 +8,7 @@ from selenium.webdriver.support.ui import Select
 
 import settings
 from shared.base import Base
-from shared.files import add_user_to_csv
+from shared.files import insert_user_to_json
 
 faker = Faker()
 
@@ -40,32 +40,29 @@ class SpotifySignup(Base):
             cookies_button.click()
         except Exception as e:
             print(f"Error accepting cookies: {e}")
+            self.driver.quit()
 
     def fill_username(self):
         try:
-            username_input = self.driver.find_element(
-                By.CSS_SELECTOR, "input[placeholder='name@domain.com']"
-            )
+            username_input = self.driver.find_element(By.ID, "username")
             username_input.send_keys(self.username)
             time.sleep(1)
-            submit_button = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
+            submit_button = self.driver.find_element(By.ID, "submit")
             submit_button.click()
         except Exception as e:
             print(f"Error filling username: {e}")
+            self.driver.quit()
 
     def fill_password(self):
         try:
             password_input = self.driver.find_element(By.NAME, "new-password")
             password_input.send_keys(self.password)
             time.sleep(self.delay2)
-            submit_button = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
+            submit_button = self.driver.find_element(By.ID, "submit")
             submit_button.click()
         except Exception as e:
             print(f"Error filling password: {e}")
+            self.driver.quit()
 
     def fill_personal_details(self):
         try:
@@ -78,7 +75,7 @@ class SpotifySignup(Base):
             day_input.send_keys(str(random.randint(1, 31)))
 
             month_select = Select(self.driver.find_element(By.NAME, "month"))
-            month_select.select_by_visible_text("April")
+            month_select.select_by_index(random.randint(1, 12))
 
             year_input = self.driver.find_element(By.NAME, "year")
             year_input.send_keys(str(random.randint(1970, 2000)))
@@ -92,12 +89,11 @@ class SpotifySignup(Base):
             time.sleep(1)
 
             # Click next
-            submit_button = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
+            submit_button = self.driver.find_element(By.ID, "submit")
             submit_button.click()
         except Exception as e:
             print(f"Error filling personal details: {e}")
+            self.driver.quit()
 
     def create_account(self):
         try:
@@ -118,17 +114,16 @@ class SpotifySignup(Base):
             time.sleep(self.delay)
 
             # Final step: Create account button click
-            final_submit = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
+            final_submit = self.driver.find_element(By.CSS_SELECTOR, "submit")
             final_submit.click()
 
             time.sleep(self.delay)
 
             print(Colors.green, "Spotify account created!")
-            add_user_to_csv(self.username, self.password)
+            insert_user_to_json(self.username, self.password)
         except Exception as e:
             print(f"Error during account creation: {e}")
+            self.driver.quit()
 
     def run(self):
         try:

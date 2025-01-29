@@ -2,4 +2,5 @@
 .env
 .idea
 *__pycache__*
-accounts.csv
+accounts.json
+playlist.history.txt

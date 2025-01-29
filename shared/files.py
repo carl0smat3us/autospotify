@@ -1,58 +1,82 @@
-import csv
+import json
 
 from settings import accounts_filename
 
 
-def read_users_from_csv():
-    users = []
+def read_users_from_json():
+    """Read users from the JSON file."""
     try:
         with open(accounts_filename, "r") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                users.append(
-                    {
-                        "username": row["username"],
-                        "password": row["password"],
-                        "listened": row["listened"],
-                    }
-                )
+            users = json.load(file)
+            return users
     except FileNotFoundError:
         print(f"Error: The file '{accounts_filename}' was not found.")
+        return []
+    except json.JSONDecodeError:
+        print(f"Error: The file '{accounts_filename}' is not a valid JSON.")
         raise
     except Exception as e:
-        print(f"Error reading CSV file: {e}")
+        print(f"Error reading JSON file: {e}")
         raise
-    return users
 
 
-def add_user_to_csv(username, password):
+def write_users_to_json(users):
+    """Write the updated users list back to the JSON file."""
     try:
-        file_exists = False
-        try:
-            with open(accounts_filename, "r") as file:
-                file_exists = True
-        except FileNotFoundError:
-            pass
-
-        with open(accounts_filename, "a", newline="") as file:
-            fieldnames = ["username", "password", "listened"]
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-
-            if not file_exists:
-                writer.writeheader()
-
-            writer.writerow(
-                {
-                    "username": username,
-                    "password": password,
-                    "listened": "no",
-                }
-            )
-
-        print(f"User '{username}' added successfully.")
-    except FileNotFoundError:
-        print(f"Error: The file '{accounts_filename}' was not found.")
-        raise
+        with open(accounts_filename, "w") as file:
+            json.dump(users, file, indent=4)
     except Exception as e:
-        print(f"Error writing to CSV file: {e}")
+        print(f"Error writing to JSON file: {e}")
+        raise
+
+
+def insert_user_to_json(username, password):
+    """
+    Insert a new user into the JSON file.
+    If the user already exists, this function does nothing.
+    """
+    try:
+        users = read_users_from_json()
+
+        for user in users:
+            if user["username"] == username:
+                return
+
+        new_user = {
+            "username": username,
+            "password": password,
+            "listened_playlist": [],
+        }
+        users.append(new_user)
+
+        write_users_to_json(users)
+
+    except Exception as e:
+        print(f"Error inserting user: {e}")
+        raise
+
+
+def update_user_in_json(username, playlist=None):
+    """
+    Update an existing user's playlist in the JSON file.
+    If the user does not exist, this function does nothing.
+    """
+    try:
+        users = read_users_from_json()
+
+        # Find the user and update their data
+        for user in users:
+            if user["username"] == username:
+                if not isinstance(user.get("listened_playlist"), list):
+                    user["listened_playlist"] = []
+
+                # Add the playlist if it's not already in the list
+                if playlist and playlist not in user["listened_playlist"]:
+                    user["listened_playlist"].append(playlist)
+                break
+
+        write_users_to_json(users)
+
+    except Exception as e:
+        print(f"Error updating user: {e}")
         raise

@@ -1,33 +1,30 @@
 import asyncio
-import os
 
 from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
-from settings import accounts_filename
-from shared.files import read_users_from_csv
+from shared.files import read_users_from_json
 
 
 def main():
     try:
         print("Bienvenue dans le CLI d'automatisation Spotify !")
-        action = (
+
+        headless = (
             input(
-                "Voulez-vous créer un compte ou écouter une playlist ? (creer/ecouter) : "
+                "Voulez-vous exécuter en mode sans interface graphique ? (1: Oui, 2: Non) : "
             )
             .strip()
             .lower()
+            == "1"
         )
 
-        if action == "creer":
+        print("\nQue voulez-vous faire ?")
+        print("1 - Créer des comptes Spotify")
+        print("2 - Écouter une playlist Spotify")
+        action = input("Entrez votre choix (1/2) : ").strip()
+
+        if action == "1":
             print("\nDémarrage de la création de compte Spotify...")
-            headless = (
-                input(
-                    "Voulez-vous exécuter en mode sans interface graphique ? (oui/non) : "
-                )
-                .strip()
-                .lower()
-                == "oui"
-            )
 
             max_accounts = 10
             while True:
@@ -51,28 +48,38 @@ def main():
 
             print("\nProcessus de création de compte terminé.")
 
-        elif action == "ecouter":
+        elif action == "2":
             print("\nDémarrage de l'interaction avec la playlist Spotify...")
-            users = read_users_from_csv(os.path.join(os.getcwd(), accounts_filename))
+            playlist_url = input("Veuillez entrer l'URL de la playlist : ").strip()
 
-            for user in users:
-                if user.get("listened", "non").lower() == "non":
-                    print(
-                        f"L'utilisateur {user['username']} n'a pas encore écouté la playlist. Actions en cours sur la playlist."
-                    )
+            users = read_users_from_json()
 
-                    asyncio.run(
-                        SpotifyPlaylist(user["username"], user["password"]).run()
-                    )
-                else:
-                    print(
-                        f"L'utilisateur {user['username']} a déjà écouté la playlist. Interaction avec la playlist ignorée."
-                    )
+            # Filter users who haven't listened to the playlist
+            users_to_listen = [
+                user for user in users if playlist_url not in user["listened_playlist"]
+            ]
+
+            print(
+                f"\nNombre d'utilisateurs qui n'ont pas encore écouté cette playlist : {len(users_to_listen)}"
+            )
+
+            for index, user in enumerate(users_to_listen, start=1):
+                print(
+                    f"Utilisateur {index} sur {len(users_to_listen)} est en train d'écouter la playlist..."
+                )
+                asyncio.run(
+                    SpotifyPlaylist(
+                        username=user["username"],
+                        password=user["password"],
+                        playlist_url=playlist_url,
+                        headless=headless,
+                    ).run()
+                )
 
             print("\nProcessus d'interaction avec la playlist terminé.")
 
         else:
-            print("\nChoix invalide. Veuillez entrer 'creer' ou 'ecouter'.")
+            print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
 
     except Exception as e:
         print(f"\nUne erreur s'est produite : {e}")
