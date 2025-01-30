@@ -2,7 +2,6 @@ import random
 import time
 
 from faker import Faker
-from pystyle import Colors
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
@@ -25,8 +24,8 @@ email_domains = [
 class SpotifySignup(Base):
     def __init__(self, headless=False):
         super().__init__(
-            username=f"{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
-                faker.unique.first_name().lower()}@{random.choice(email_domains)}",
+            username=f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
+                faker.unique.first_name().lower()}@{random.choice(email_domains)}""",
             password=faker.password(),
             headless=headless,
         )
@@ -127,7 +126,7 @@ class SpotifySignup(Base):
 
             time.sleep(10)
 
-            print(Colors.green, "Spotify account created!")
+            print("Le compte spotify a etait generé.")
             insert_user_to_json(self.username, self.password)
         except Exception as e:
             print(f"Error during account creation: {e}")

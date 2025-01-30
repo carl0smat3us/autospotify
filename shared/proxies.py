@@ -39,3 +39,19 @@ def get_a_working_proxy():
             print(f"Proxy {proxy} failed. Trying another one.")
 
     return None
+
+
+def get_user_ip(proxy: str):
+    proxy_dict = None
+    try:
+        if proxy:
+            proxy_dict = {"http": proxy, "https": proxy}
+        response = requests.get(
+            "https://api.ipify.org?format=json", proxies=proxy_dict, timeout=10
+        )
+        response.raise_for_status()
+        ip_data = response.json()
+        return ip_data.get("ip")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to get user IP using proxy {proxy}: {e}")
+        return None

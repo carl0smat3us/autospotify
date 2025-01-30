@@ -11,7 +11,6 @@ def format_python_files():
             if file.endswith(".py"):
                 file_path = os.path.join(root, file)
                 try:
-                    # Run isort and black on the file
                     subprocess.run(["isort", file_path], check=True)
                     subprocess.run(["black", file_path], check=True)
                 except subprocess.CalledProcessError as e:

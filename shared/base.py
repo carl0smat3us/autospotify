@@ -2,7 +2,6 @@ import random
 import socket
 
 import pytz
-from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -12,8 +11,6 @@ hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 
 from shared.proxies import get_a_working_proxy
-
-ua = UserAgent(platforms="desktop")
 
 # proxy = get_a_working_proxy()
 
@@ -60,12 +57,6 @@ class Base:
             "excludeSwitches", ["enable-automation", "enable-logging"]
         )
 
-        if headless:
-            chrome_options.add_argument("--headless")
-
-        if random_lang:
-            chrome_options.add_argument(f"--lang={random.choice(supported_languages)}")
-
         chrome_options.add_argument("--disable-logging")
         chrome_options.add_argument("--log-level=3")
         chrome_options.add_argument("--disable-infobars")
@@ -81,12 +72,20 @@ class Base:
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
 
+        if random_lang:
+            chrome_options.add_argument(f"--lang={random.choice(supported_languages)}")
+
+        if headless:
+            chrome_options.add_argument("--headless")
+
         self.driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=chrome_options
         )
 
         self.set_random_timezone()
         self.set_fake_geolocation()
+
+        # print(f"L'address ip est: {get_user_ip(proxy)}")
 
     def set_random_timezone(self):
         self.driver.execute_cdp_cmd(

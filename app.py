@@ -34,7 +34,7 @@ def main():
                     if 1 <= num_accounts:
                         break
                     else:
-                        print(f"Veuillez entrer un nombre superior à 0.")
+                        print(f"Veuillez entrer un nombre supérieur à 0.")
                 except ValueError:
                     print("Veuillez entrer un nombre valide.")
 
@@ -60,18 +60,39 @@ def main():
                 f"\nNombre d'utilisateurs qui n'ont pas encore écouté cette playlist : {len(users_to_listen)}"
             )
 
-            for index, user in enumerate(users_to_listen, start=1):
-                print(
-                    f"Utilisateur {index} sur {len(users_to_listen)} est en train d'écouter la playlist..."
-                )
-                asyncio.run(
-                    SpotifyPlaylist(
-                        username=user["username"],
-                        password=user["password"],
-                        playlist_url=playlist_url,
-                        headless=headless,
-                    ).run()
-                )
+            # Ask for the number of concurrent executions
+            while True:
+                try:
+                    concurrent_executions = int(
+                        input(
+                            f"Combien d'exécutions simultanées voulez-vous ? (1 à {len(users_to_listen)}): "
+                        ).strip()
+                    )
+                    if 1 <= concurrent_executions <= len(users_to_listen):
+                        break
+                    else:
+                        print(
+                            f"Veuillez entrer un nombre entre 1 et {len(users_to_listen)}."
+                        )
+                except ValueError:
+                    print("Veuillez entrer un nombre valide.")
+
+            for index in range(0, len(users_to_listen), concurrent_executions):
+                tasks = []
+                for j in range(concurrent_executions):
+                    if index + j < len(users_to_listen):
+                        user = users_to_listen[index + j]
+                        print(
+                            f"Utilisateur {index + j + 1} sur {len(users_to_listen)} est en train d'écouter la playlist..."
+                        )
+                        spotify_playlist = SpotifyPlaylist(
+                            username=user["username"],
+                            password=user["password"],
+                            playlist_url=playlist_url,
+                            headless=headless,
+                        )
+                        tasks.append(spotify_playlist.run())
+                asyncio.gather(*tasks)
 
             print("\nProcessus d'interaction avec la playlist terminé.")
 

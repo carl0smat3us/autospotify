@@ -1,9 +1,7 @@
 import time
 
 from faker import Faker
-from pystyle import Colors
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 
 import settings
@@ -62,7 +60,7 @@ class SpotifyPlaylist(Base):
                 By.CSS_SELECTOR, "button[data-testid='play-button']"
             )
 
-            # the click is only working from javascript when the account is new!!!
+            # Click works via JavaScript only for new accounts.
             self.driver.execute_script("arguments[0].click();", play_button)
 
         except NoSuchElementException as e:
@@ -88,7 +86,7 @@ class SpotifyPlaylist(Base):
 
                 playlist_songs = self.driver.find_element(
                     By.XPATH,
-                    '//*[@id="main"]/div/div[2]/div[4]/div/div[2]/div[2]/div/main/section/div[2]/div[3]/div/div[1]/div[2]/div[2]',
+                    '//*[@id="main"]/div/div[2]/div[4]/div/div/div[2]/div[2]/div/main/section/div[2]/div[3]/div/div[1]/div[2]/div[2]',
                 )
 
                 last_song = playlist_songs.find_element(
@@ -115,11 +113,12 @@ class SpotifyPlaylist(Base):
 
                         if percentage > 90:
                             print(
-                                Colors.blue,
                                 f"L'utilisateur {self.username} a fini d'écouter la playlist...",
                             )
 
                             update_user_in_json(self.username, self.playlist_url)
+
+                            self.driver.quit()
 
                     except NoSuchElementException as e:
                         print(e)
