@@ -3,6 +3,7 @@ import time
 from faker import Faker
 from pystyle import Colors
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 
 import settings
@@ -44,26 +45,35 @@ class SpotifyPlaylist(Base):
                 )
                 reject_button.click()
             except NoSuchElementException:
-                print("Reject cookies button not found. Continuing.")
+                print(
+                    "Quelque chose s'est mal passé, probablement un captcha est apparu !!!"
+                )
+                time.sleep(3)
+                print("Passage à la création de ce compte...")
+                self.driver.quit()
 
             time.sleep(self.delay2)
 
-            # Navigate to the playlist or track URL
             self.driver.get(self.playlist_url)
-            time.sleep(10)
 
-            # Click the play button
+            time.sleep(15)
+
             play_button = self.driver.find_element(
-                By.XPATH,
-                "/html/body/div[4]/div/div[2]/div[4]/div/div[2]/div[2]/div/main/section/div[2]/div[2]/div[2]/div/div/div[1]/button/span",
+                By.CSS_SELECTOR, "button[data-testid='play-button']"
             )
-            play_button.click()
-            time.sleep(10)
+
+            # the click is only working from javascript when the account is new!!!
+            self.driver.execute_script("arguments[0].click();", play_button)
+
+        except NoSuchElementException as e:
+            print(e)
+            raise e
 
         except Exception as e:
-            print(f"An error occurred in the bot system: {str(e)}")
+            print(e)
+            raise e
 
-        time.sleep(5)
+        time.sleep(15)
 
         self.monitor_last_song()
 
@@ -71,10 +81,16 @@ class SpotifyPlaylist(Base):
         """Continuously monitor the last song's progress and play state."""
         try:
             while True:
+                # playlist_songs = self.driver.find_element(
+                #     By.XPATH,
+                #     "//div[@role='presentation']//div[@role='row' and (@aria-selected='true' or @aria-selected='false')]",
+                # )
+
                 playlist_songs = self.driver.find_element(
                     By.XPATH,
                     '//*[@id="main"]/div/div[2]/div[4]/div/div[2]/div[2]/div/main/section/div[2]/div[3]/div/div[1]/div[2]/div[2]',
                 )
+
                 last_song = playlist_songs.find_element(
                     By.XPATH, './div[@role="row"][last()]'
                 )

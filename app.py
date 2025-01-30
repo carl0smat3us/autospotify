@@ -26,18 +26,15 @@ def main():
         if action == "1":
             print("\nDémarrage de la création de compte Spotify...")
 
-            max_accounts = 10
             while True:
                 try:
                     num_accounts = int(
-                        input(
-                            f"Combien de comptes voulez-vous créer ? (1-{max_accounts}) : "
-                        ).strip()
+                        input(f"Combien de comptes voulez-vous créer ?: ").strip()
                     )
-                    if 1 <= num_accounts <= max_accounts:
+                    if 1 <= num_accounts:
                         break
                     else:
-                        print(f"Veuillez entrer un nombre entre 1 et {max_accounts}.")
+                        print(f"Veuillez entrer un nombre superior à 0.")
                 except ValueError:
                     print("Veuillez entrer un nombre valide.")
 
