@@ -7,3 +7,5 @@ spotify_registration_address = (
 )
 
 venv_dir = ".venv"
+
+chrome_driver_path = "chromedriver.exe"

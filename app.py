@@ -1,12 +1,23 @@
 import asyncio
+import os
+import random
 
 from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
 from shared.files import read_users_from_json
 
 
+def clear_terminal():
+    if os.name == "nt":  # Windows
+        os.system("cls")
+    else:
+        os.system("clear")
+
+
 def main():
     try:
+        clear_terminal()
+
         print("Bienvenue dans le CLI d'automatisation Spotify !")
 
         headless = (
@@ -51,44 +62,38 @@ def main():
 
             users = read_users_from_json()
 
-            # Filter users who haven't listened to the playlist
-            users_to_listen = [
-                user for user in users if playlist_url not in user["listened_playlist"]
-            ]
-
-            print(
-                f"\nNombre d'utilisateurs qui n'ont pas encore écouté cette playlist : {len(users_to_listen)}"
-            )
+            # Shuffle the users for random selection
+            random.shuffle(users)
 
             # Ask for the number of concurrent executions
             while True:
                 try:
                     concurrent_executions = int(
                         input(
-                            f"Combien d'exécutions simultanées voulez-vous ? (1 à {len(users_to_listen)}): "
+                            f"Combien d'exécutions simultanées voulez-vous ? (1 à {len(users)}): "
                         ).strip()
                     )
-                    if 1 <= concurrent_executions <= len(users_to_listen):
+                    if 1 <= concurrent_executions <= len(users):
                         break
                     else:
-                        print(
-                            f"Veuillez entrer un nombre entre 1 et {len(users_to_listen)}."
-                        )
+                        print(f"Veuillez entrer un nombre entre 1 et {len(users)}.")
                 except ValueError:
                     print("Veuillez entrer un nombre valide.")
 
-            for index in range(0, len(users_to_listen), concurrent_executions):
+            for index in range(0, len(users), concurrent_executions):
                 tasks = []
                 for j in range(concurrent_executions):
-                    if index + j < len(users_to_listen):
-                        user = users_to_listen[index + j]
-                        print(
-                            f"Utilisateur {index + j + 1} sur {len(users_to_listen)} est en train d'écouter la playlist..."
-                        )
+                    if index + j < len(users):
+                        user = users[index + j]
+
+                        print()
+                        print(f"({index + j + 1}/{len(users)})")
+
                         spotify_playlist = SpotifyPlaylist(
                             username=user["username"],
                             password=user["password"],
                             playlist_url=playlist_url,
+                            user_index=users.index(user) + 1,
                             headless=headless,
                         )
                         tasks.append(spotify_playlist.run())

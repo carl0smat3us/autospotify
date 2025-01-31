@@ -10,7 +10,7 @@ def read_users_from_json(ignore_not_found=False):
             users = json.load(file)
             return users
     except FileNotFoundError:
-        if not ignore_not_found:
+        if ignore_not_found == False:
             print(f"Error: The file '{accounts_filename}' was not found.")
         return []
     except json.JSONDecodeError:
@@ -46,7 +46,6 @@ def insert_user_to_json(username, password):
         new_user = {
             "username": username,
             "password": password,
-            "listened_playlist": [],
         }
         users.append(new_user)
 
@@ -54,30 +53,4 @@ def insert_user_to_json(username, password):
 
     except Exception as e:
         print(f"Error inserting user: {e}")
-        raise
-
-
-def update_user_in_json(username, playlist=None):
-    """
-    Update an existing user's playlist in the JSON file.
-    If the user does not exist, this function does nothing.
-    """
-    try:
-        users = read_users_from_json()
-
-        # Find the user and update their data
-        for user in users:
-            if user["username"] == username:
-                if not isinstance(user.get("listened_playlist"), list):
-                    user["listened_playlist"] = []
-
-                # Add the playlist if it's not already in the list
-                if playlist and playlist not in user["listened_playlist"]:
-                    user["listened_playlist"].append(playlist)
-                break
-
-        write_users_to_json(users)
-
-    except Exception as e:
-        print(f"Error updating user: {e}")
         raise

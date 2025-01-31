@@ -46,10 +46,7 @@ class SpotifySignup(Base):
             username_input = self.driver.find_element(By.ID, "username")
             username_input.send_keys(self.username)
             time.sleep(1)
-            submit_button = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
-            submit_button.click()
+            self.click_next()
         except Exception as e:
             print(f"Error filling username: {e}")
             self.driver.quit()
@@ -59,10 +56,7 @@ class SpotifySignup(Base):
             password_input = self.driver.find_element(By.NAME, "new-password")
             password_input.send_keys(self.password)
             time.sleep(self.delay2)
-            submit_button = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
-            submit_button.click()
+            self.click_next()
         except Exception as e:
             print(f"Error filling password: {e}")
             self.driver.quit()
@@ -84,18 +78,17 @@ class SpotifySignup(Base):
             year_input.send_keys(str(random.randint(1970, 2000)))
 
             # Select Gender
+            genders_list = ["gender_option_male", "gender_option_female"]
+
             gender_option = self.driver.find_element(
-                By.CSS_SELECTOR, "label[for='gender_option_male']"
+                By.CSS_SELECTOR, f"label[for='{random.choice(genders_list)}']"
             )
             gender_option.click()
 
             time.sleep(1)
 
-            # Click next
-            submit_button = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
-            submit_button.click()
+            self.click_next()
+
         except Exception as e:
             print(f"Error filling personal details: {e}")
             self.driver.quit()
@@ -124,7 +117,7 @@ class SpotifySignup(Base):
             )
             final_submit.click()
 
-            time.sleep(10)
+            time.sleep(15)
 
             print("Le compte spotify a etait generé.")
             insert_user_to_json(self.username, self.password)
@@ -132,9 +125,15 @@ class SpotifySignup(Base):
             print(f"Error during account creation: {e}")
             self.driver.quit()
 
+    def click_next(self):
+        submit_button = self.driver.find_element(
+            By.CSS_SELECTOR, "[data-testid='submit']"
+        )
+        submit_button.click()
+
     def run(self):
         try:
             self.driver.get(self.url)
             self.create_account()
-        finally:
+        except:
             self.driver.quit()

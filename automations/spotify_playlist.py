@@ -1,23 +1,31 @@
 import time
 
+import keyboard
 from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 import settings
 from shared.base import Base
-from shared.files import update_user_in_json
 
 faker = Faker()
 
 
 class SpotifyPlaylist(Base):
-    def __init__(self, username: str, password: str, playlist_url: str, headless=False):
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        playlist_url: str,
+        user_index: int,
+        headless=False,
+    ):
         super().__init__(
             username=username, password=password, headless=headless, random_lang=False
         )
         self.url = settings.spotify_login_address
         self.playlist_url = playlist_url
+        self.user_index = user_index
 
     def run(self):
         try:
@@ -46,22 +54,31 @@ class SpotifyPlaylist(Base):
                 print(
                     "Quelque chose s'est mal passé, probablement un captcha est apparu !!!"
                 )
-                time.sleep(3)
                 print("Passage à la création de ce compte...")
                 self.driver.quit()
 
-            time.sleep(self.delay2)
+            time.sleep(self.delay)
 
             self.driver.get(self.playlist_url)
 
-            time.sleep(15)
+            time.sleep(self.delay2)
 
-            play_button = self.driver.find_element(
-                By.CSS_SELECTOR, "button[data-testid='play-button']"
-            )
+            # try:
+            #     # verify if spotify is asking to choose my favorits artists
+            #     self.driver.find_element(By.XPATH, '//*[@id="main"]/div/div[2]/div[10]')
+            # except:
+            #     pass
+            # else:
+            #     self.choose_favorite_artist()
+            #     time.sleep(5)
+            #     self.driver.get(self.playlist_url)
+            #     time.sleep(self.delay2)
 
-            # Click works via JavaScript only for new accounts.
-            self.driver.execute_script("arguments[0].click();", play_button)
+            keyboard.send("esc")
+
+            time.sleep(5)
+
+            self.play()
 
         except NoSuchElementException as e:
             print(e)
@@ -71,27 +88,64 @@ class SpotifyPlaylist(Base):
             print(e)
             raise e
 
-        time.sleep(15)
+        time.sleep(5)
 
         self.monitor_last_song()
+
+    # def choose_favorite_artist(self):
+    #     artists = [
+    #         "Post Malone",
+    #         "Gims",
+    #         "Portugal Man",
+    #         "Kendrick Lamar",
+    #         "Eminem",
+    #         "Justin Bieber",
+    #     ]
+
+    #     search_bar = self.driver.find_element(
+    #         By.XPATH,
+    #         "//*[@id='global-nav-bar']/div[2]/div/div/span/div/form/div[2]/input",
+    #     )
+
+    #     search_bar.send_keys(random.choice(artists))
+
+    #     time.sleep(5)
+
+    #     artists_table = self.driver.find_element(By.XPATH, "//*[@id='searchPage']/div")
+
+    #     first_artist = artists_table.find_element(By.XPATH, './div[@role="row"][1]')
+
+    #     first_artist.click()
+
+    def play(self):
+        play_button = self.driver.find_element(
+            By.CSS_SELECTOR, "button[data-testid='play-button']"
+        )
+
+        # Click works via JavaScript only for new accounts.
+        self.driver.execute_script("arguments[0].click();", play_button)
+
+        print(
+            f"🎧 Le {self.user_index}° utilisateur est en train d'écouter la playlist. 🎶"
+        )
 
     def monitor_last_song(self):
         """Continuously monitor the last song's progress and play state."""
         try:
             while True:
-                # playlist_songs = self.driver.find_element(
-                #     By.XPATH,
-                #     "//div[@role='presentation']//div[@role='row' and (@aria-selected='true' or @aria-selected='false')]",
-                # )
-
                 playlist_songs = self.driver.find_element(
-                    By.XPATH,
-                    '//*[@id="main"]/div/div[2]/div[4]/div/div/div[2]/div[2]/div/main/section/div[2]/div[3]/div/div[1]/div[2]/div[2]',
-                )
+                    "xpath",
+                    "//div[@role='row' and (@aria-selected='true' or @aria-selected='false')]",
+                ).find_element("xpath", "..")
 
-                last_song = playlist_songs.find_element(
-                    By.XPATH, './div[@role="row"][last()]'
-                )
+                try:
+                    last_song = playlist_songs.find_element(
+                        By.XPATH, './div[@role="row"][last()]'
+                    )
+                except:
+                    # The Spotify playlist is too large to find the last song.
+                    time.sleep(5)
+                    continue
 
                 try:
                     # Check if the last song is playing
@@ -113,10 +167,8 @@ class SpotifyPlaylist(Base):
 
                         if percentage > 90:
                             print(
-                                f"L'utilisateur {self.username} a fini d'écouter la playlist...",
+                                f"🎧 Le {self.user_index}° utilisateur a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
                             )
-
-                            update_user_in_json(self.username, self.playlist_url)
 
                             self.driver.quit()
 
@@ -126,7 +178,7 @@ class SpotifyPlaylist(Base):
                 except NoSuchElementException as e:
                     pass
 
-                time.sleep(2)
+                time.sleep(1)
 
         except KeyboardInterrupt:
             self.driver.quit()
