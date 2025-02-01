@@ -85,10 +85,14 @@ class SpotifySignup(Base):
 
     def choose_an_artist(self):
         try:
-            # Check if Spotify prompts to choose favorite artists
-            self.driver.find_element(By.XPATH, '//*[@id="main"]/div/div[2]/div[10]')
+            # Check if Spotify displays a pop-up asking to choose favorite artists
+            self.driver.find_element(
+                By.XPATH,
+                '//*[@data-testid="popover"]/div[@class="encore-announcement-set" and @role="tooltip"]',
+            )
+            print("Pop-up detected: Spotify is asking to choose favorite artists.")
         except Exception:
-            # If the element is not found, no action is needed
+            print("No pop-up detected: Proceeding with the process...")
             return
 
         artists = [
@@ -106,14 +110,13 @@ class SpotifySignup(Base):
                 "//*[@id='global-nav-bar']/div[2]/div/div/span/div/form/div[2]/input",
             )
 
-            # Input a randomly selected artist name
             search_bar.send_keys(random.choice(artists))
 
             time.sleep(15)
 
             artists_table = self.driver.find_element(
                 "xpath",
-                "//span[@role='presentation' and (@aria-expanded='true' and @data-open'true')]",
+                "//span[@role='presentation' and @aria-expanded='true' and @data-open='true']",
             ).find_element("xpath", "..")
 
             time.sleep(5)
@@ -124,7 +127,13 @@ class SpotifySignup(Base):
 
             first_artist.click()
 
-            time.sleep(5000)
+            time.sleep(15)
+
+            self.play()
+
+            time.sleep(50)
+
+            self.driver.quit()
 
         except Exception as e:
             print(f"Error while choosing an artist: {e}")
@@ -134,43 +143,33 @@ class SpotifySignup(Base):
         try:
             time.sleep(5)
 
-            try:
-                self.accept_cookies()
-            except Exception as e:
-                print(f"Error accepting cookies: {e}")
-                self.driver.quit()
+            self.accept_cookies()
 
             time.sleep(2)
 
-            # Step 1: Fill username
+            # Create the account
             self.fill_username()
             time.sleep(self.delay)
 
-            # Step 2: Fill password
             self.fill_password()
             time.sleep(self.delay)
 
-            # Step 3: Fill personal details
             self.fill_personal_details()
             time.sleep(self.delay)
 
-            # Final step: Create account button click
-            self.click_next()
+            self.click_next()  # Confirm
 
-            time.sleep(5000)
+            time.sleep(20)
 
+            self.captcha_solver()
             self.choose_an_artist()
+
             print("Le compte spotify a etait generé.")
             insert_user_to_json(self.username, self.password)
+
         except Exception as e:
             print(f"Error during account creation: {e}")
             self.driver.quit()
-
-    def click_next(self):
-        submit_button = self.driver.find_element(
-            By.CSS_SELECTOR, "[data-testid='submit']"
-        )
-        submit_button.click()
 
     def run(self):
         try:

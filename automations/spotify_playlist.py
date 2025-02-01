@@ -31,27 +31,20 @@ class SpotifyPlaylist(Base):
         try:
             self.driver.get(self.url)
 
-            # Locate username and password inputs
+            # Login
             username_input = self.driver.find_element(By.ID, "login-username")
-            password_input = self.driver.find_element(By.ID, "login-password")
-
-            # Enter credentials
             username_input.send_keys(self.username)
+
+            password_input = self.driver.find_element(By.ID, "login-password")
             password_input.send_keys(self.password)
 
-            # Click the login button
-            self.driver.find_element(By.ID, "login-button").click()
+            self.driver.find_element(By.ID, "login-button").click()  # Click the button
 
             time.sleep(15)
 
-            try:
-                self.accept_cookies()
-            except NoSuchElementException:
-                print(
-                    "Quelque chose s'est mal passé, probablement un captcha est apparu !!!"
-                )
-                print("Passage à la création de ce compte...")
-                self.driver.quit()
+            self.captcha_solver()
+
+            self.accept_cookies()
 
             time.sleep(self.delay)
 
@@ -62,32 +55,16 @@ class SpotifyPlaylist(Base):
             keyboard.send("esc")
 
             time.sleep(5)
+            self.play(self.user_index)
+            time.sleep(5)
 
-            self.play()
+            self.monitor_last_song()
 
         except NoSuchElementException as e:
-            print(e)
             raise e
 
         except Exception as e:
-            print(e)
             raise e
-
-        time.sleep(5)
-
-        self.monitor_last_song()
-
-    def play(self):
-        play_button = self.driver.find_element(
-            By.CSS_SELECTOR, "button[data-testid='play-button']"
-        )
-
-        # Click works via JavaScript only for new accounts.
-        self.driver.execute_script("arguments[0].click();", play_button)
-
-        print(
-            f"🎧 Le {self.user_index}° utilisateur est en train d'écouter la playlist. 🎶"
-        )
 
     def monitor_last_song(self):
         """Continuously monitor the last song's progress and play state."""
@@ -102,8 +79,7 @@ class SpotifyPlaylist(Base):
                     last_song = playlist_songs.find_element(
                         By.XPATH, './div[@role="row"][last()]'
                     )
-                except:
-                    # The Spotify playlist is too large to find the last song.
+                except:  # The Spotify playlist is too large to find the last song.
                     time.sleep(5)
                     continue
 
@@ -132,15 +108,13 @@ class SpotifyPlaylist(Base):
 
                             self.driver.quit()
 
-                    except NoSuchElementException as e:
-                        print(e)
+                    except NoSuchElementException:
+                        pass
 
-                except NoSuchElementException as e:
+                except NoSuchElementException:
                     pass
 
                 time.sleep(1)
 
-        except KeyboardInterrupt:
-            self.driver.quit()
         except KeyboardInterrupt:
             self.driver.quit()

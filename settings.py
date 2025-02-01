@@ -8,4 +8,20 @@ spotify_registration_address = (
 
 venv_dir = ".venv"
 
-chrome_driver_path = "chromedriver.exe"
+spotify_supported_languages = [
+    "en-US",
+    "en-GB",
+    "en-CA",
+    "fr-FR",
+    "de-DE",
+    "es-ES",
+    "it-IT",
+    "ja-JP",
+    "ko-KR",
+    "pt-BR",
+    "ru-RU",
+    "nl-NL",
+    "sv-SE",
+    "da-DK",
+    "no-NO",
+]

@@ -1,6 +1,6 @@
 # Automatisation Spotify
 
-Un Bot pour creer de comptes spotify et ecouter de playlist entiers.
+Un BOT pour créer des comptes spotify et ecouter des playlist entiers.
 
 # Démarrage
 

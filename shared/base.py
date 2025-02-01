@@ -1,41 +1,20 @@
 import random
 
 import pytz
+from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-from shared.proxies import get_a_working_proxy
+from settings import spotify_supported_languages
+
+# from shared.proxies import get_a_working_proxy
 
 # proxy = get_a_working_proxy()
 
-supported_languages = [
-    "en-US",
-    "en-GB",
-    "en-CA",
-    "fr-FR",
-    "de-DE",
-    "es-ES",
-    "it-IT",
-    "ja-JP",
-    "ko-KR",
-    "pt-BR",
-    "ru-RU",
-    "nl-NL",
-    "sv-SE",
-    "da-DK",
-    "no-NO",
-]
-
-user_agents = [
-    # Chrome (Windows)
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
-]
-
-supported_timezones = pytz.all_timezones
+ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
 
 class Base:
@@ -48,36 +27,38 @@ class Base:
         self.username = username
         self.password = password
 
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_experimental_option(
+        browser_options = webdriver.ChromeOptions()
+        browser_options.add_experimental_option(
             "excludeSwitches", ["enable-automation", "enable-logging"]
         )
 
-        chrome_options.add_argument("--disable-logging")
-        chrome_options.add_argument("--log-level=3")
-        chrome_options.add_argument("--disable-infobars")
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument("--window-size=1366,768")
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_argument("--lang=en-US,en;q=0.9")
-        chrome_options.add_argument("--disable-notifications")
-        chrome_options.add_argument(f"--user-agent={random.choice(user_agents)}")
-        # chrome_options.add_argument(f"--proxy-server={proxy}")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--incognito")
-        chrome_options.add_argument("--disable-cookies")
-        chrome_options.add_experimental_option(
+        browser_options.add_argument("--disable-logging")
+        browser_options.add_argument("--log-level=3")
+        browser_options.add_argument("--disable-infobars")
+        browser_options.add_argument("--disable-extensions")
+        browser_options.add_argument("--window-size=1366,768")
+        browser_options.add_argument("--start-maximized")
+        browser_options.add_argument("--lang=en-US,en;q=0.9")
+        browser_options.add_argument("--disable-notifications")
+        browser_options.add_argument(f"--user-agent={ua.random}")
+        # browser_options.add_argument(f"--proxy-server={proxy}")
+        browser_options.add_argument("--disable-dev-shm-usage")
+        browser_options.add_argument("--incognito")
+        browser_options.add_argument("--disable-cookies")
+        browser_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
 
         if random_lang:
-            chrome_options.add_argument(f"--lang={random.choice(supported_languages)}")
+            browser_options.add_argument(
+                f"--lang={random.choice(spotify_supported_languages)}"
+            )
 
         if headless:
-            chrome_options.add_argument("--headless")
+            browser_options.add_argument("--headless")
 
         self.driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()), options=chrome_options
+            service=Service(ChromeDriverManager().install()), options=browser_options
         )
 
         self.set_random_timezone()
@@ -86,7 +67,7 @@ class Base:
     def set_random_timezone(self):
         self.driver.execute_cdp_cmd(
             "Emulation.setTimezoneOverride",
-            {"timezoneId": random.choice(supported_timezones)},
+            {"timezoneId": random.choice(pytz.all_timezones)},
         )
 
     def set_fake_geolocation(self):
@@ -97,6 +78,39 @@ class Base:
         }
         self.driver.execute_cdp_cmd("Emulation.setGeolocationOverride", params)
 
+    def play(self, user_index=None):
+        play_button = self.driver.find_element(
+            By.CSS_SELECTOR, "button[data-testid='play-button']"
+        )
+
+        # Click works via JavaScript only for new accounts.
+        self.driver.execute_script("arguments[0].click();", play_button)
+
+        if user_index is not None:
+            print(
+                f"🎧 Le {user_index}° utilisateur est en train d'écouter la playlist. 🎶"
+            )
+
+    def captcha_solver(self):
+        if "challenge.spotify.com" in self.driver.current_url:
+            print("CAPTCHA detected!")
+            print("A CAPTCHA solver has not been implemented. Exiting the process...")
+            self.driver.quit()
+        else:
+            print("No CAPTCHA detected. Proceeding with the process...")
+
+    def click_next(self):
+        submit_button = self.driver.find_element(
+            By.CSS_SELECTOR, "[data-testid='submit']"
+        )
+        submit_button.click()
+
     def accept_cookies(self):
-        cookies_button = self.driver.find_element(By.ID, "onetrust-accept-btn-handler")
-        cookies_button.click()
+        try:
+            cookies_button = self.driver.find_element(
+                By.ID, "onetrust-accept-btn-handler"
+            )
+            cookies_button.click()
+        except Exception as e:
+            print(f"Error accepting cookies: {e}")
+            self.driver.quit()
