@@ -44,12 +44,8 @@ class SpotifyPlaylist(Base):
 
             time.sleep(15)
 
-            # Reject cookies if the button exists
             try:
-                reject_button = self.driver.find_element(
-                    By.ID, "onetrust-reject-all-handler"
-                )
-                reject_button.click()
+                self.accept_cookies()
             except NoSuchElementException:
                 print(
                     "Quelque chose s'est mal passé, probablement un captcha est apparu !!!"
@@ -62,17 +58,6 @@ class SpotifyPlaylist(Base):
             self.driver.get(self.playlist_url)
 
             time.sleep(self.delay2)
-
-            # try:
-            #     # verify if spotify is asking to choose my favorits artists
-            #     self.driver.find_element(By.XPATH, '//*[@id="main"]/div/div[2]/div[10]')
-            # except:
-            #     pass
-            # else:
-            #     self.choose_favorite_artist()
-            #     time.sleep(5)
-            #     self.driver.get(self.playlist_url)
-            #     time.sleep(self.delay2)
 
             keyboard.send("esc")
 
@@ -91,31 +76,6 @@ class SpotifyPlaylist(Base):
         time.sleep(5)
 
         self.monitor_last_song()
-
-    # def choose_favorite_artist(self):
-    #     artists = [
-    #         "Post Malone",
-    #         "Gims",
-    #         "Portugal Man",
-    #         "Kendrick Lamar",
-    #         "Eminem",
-    #         "Justin Bieber",
-    #     ]
-
-    #     search_bar = self.driver.find_element(
-    #         By.XPATH,
-    #         "//*[@id='global-nav-bar']/div[2]/div/div/span/div/form/div[2]/input",
-    #     )
-
-    #     search_bar.send_keys(random.choice(artists))
-
-    #     time.sleep(5)
-
-    #     artists_table = self.driver.find_element(By.XPATH, "//*[@id='searchPage']/div")
-
-    #     first_artist = artists_table.find_element(By.XPATH, './div[@role="row"][1]')
-
-    #     first_artist.click()
 
     def play(self):
         play_button = self.driver.find_element(
@@ -180,5 +140,7 @@ class SpotifyPlaylist(Base):
 
                 time.sleep(1)
 
+        except KeyboardInterrupt:
+            self.driver.quit()
         except KeyboardInterrupt:
             self.driver.quit()

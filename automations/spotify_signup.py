@@ -31,16 +31,6 @@ class SpotifySignup(Base):
         )
         self.url = settings.spotify_registration_address
 
-    def accept_cookies(self):
-        try:
-            cookies_button = self.driver.find_element(
-                By.ID, "onetrust-accept-btn-handler"
-            )
-            cookies_button.click()
-        except Exception as e:
-            print(f"Error accepting cookies: {e}")
-            self.driver.quit()
-
     def fill_username(self):
         try:
             username_input = self.driver.find_element(By.ID, "username")
@@ -93,10 +83,63 @@ class SpotifySignup(Base):
             print(f"Error filling personal details: {e}")
             self.driver.quit()
 
+    def choose_an_artist(self):
+        try:
+            # Check if Spotify prompts to choose favorite artists
+            self.driver.find_element(By.XPATH, '//*[@id="main"]/div/div[2]/div[10]')
+        except Exception:
+            # If the element is not found, no action is needed
+            return
+
+        artists = [
+            "Post Malone",
+            "Gims",
+            "Portugal Man",
+            "Kendrick Lamar",
+            "Eminem",
+            "Justin Bieber",
+        ]
+
+        try:
+            search_bar = self.driver.find_element(
+                By.XPATH,
+                "//*[@id='global-nav-bar']/div[2]/div/div/span/div/form/div[2]/input",
+            )
+
+            # Input a randomly selected artist name
+            search_bar.send_keys(random.choice(artists))
+
+            time.sleep(15)
+
+            artists_table = self.driver.find_element(
+                "xpath",
+                "//span[@role='presentation' and (@aria-expanded='true' and @data-open'true')]",
+            ).find_element("xpath", "..")
+
+            time.sleep(5)
+
+            first_artist = artists_table.find_element(
+                By.XPATH, './div[@span="presentation"][1]'
+            )
+
+            first_artist.click()
+
+            time.sleep(5000)
+
+        except Exception as e:
+            print(f"Error while choosing an artist: {e}")
+            self.driver.quit()
+
     def create_account(self):
         try:
             time.sleep(5)
-            self.accept_cookies()
+
+            try:
+                self.accept_cookies()
+            except Exception as e:
+                print(f"Error accepting cookies: {e}")
+                self.driver.quit()
+
             time.sleep(2)
 
             # Step 1: Fill username
@@ -112,13 +155,11 @@ class SpotifySignup(Base):
             time.sleep(self.delay)
 
             # Final step: Create account button click
-            final_submit = self.driver.find_element(
-                By.CSS_SELECTOR, "[data-testid='submit']"
-            )
-            final_submit.click()
+            self.click_next()
 
-            time.sleep(15)
+            time.sleep(5000)
 
+            self.choose_an_artist()
             print("Le compte spotify a etait generé.")
             insert_user_to_json(self.username, self.password)
         except Exception as e:

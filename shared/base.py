@@ -4,9 +4,10 @@ import pytz
 from faker import Faker
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-# from shared.proxies import get_a_working_proxy
+from shared.proxies import get_a_working_proxy
 
 # proxy = get_a_working_proxy()
 
@@ -63,6 +64,8 @@ class Base:
         chrome_options.add_argument(f"--user-agent={random.choice(user_agents)}")
         # chrome_options.add_argument(f"--proxy-server={proxy}")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--incognito")
+        chrome_options.add_argument("--disable-cookies")
         chrome_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
@@ -80,8 +83,6 @@ class Base:
         self.set_random_timezone()
         self.set_fake_geolocation()
 
-        # print(f"L'address ip est: {get_user_ip(proxy)}")
-
     def set_random_timezone(self):
         self.driver.execute_cdp_cmd(
             "Emulation.setTimezoneOverride",
@@ -95,3 +96,7 @@ class Base:
             "accuracy": 100,
         }
         self.driver.execute_cdp_cmd("Emulation.setGeolocationOverride", params)
+
+    def accept_cookies(self):
+        cookies_button = self.driver.find_element(By.ID, "onetrust-accept-btn-handler")
+        cookies_button.click()
