@@ -6,7 +6,7 @@ Un bot conçu pour créer des comptes Spotify automatiquement et écouter des pl
 
 1. Créez un environnement et installez les dépendances
 ```bash
-python -m venv .venv
+python install.py
 ```
 
 2. Activez l'environnement
