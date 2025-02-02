@@ -1,6 +1,5 @@
 import time
 
-import keyboard
 from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -10,6 +9,10 @@ from exceptions import RetryAgainError
 from shared.base import Base
 
 faker = Faker()
+
+from pynput.keyboard import Controller, Key
+
+keyboard = Controller()
 
 
 class SpotifyPlaylist(Base):
@@ -52,7 +55,7 @@ class SpotifyPlaylist(Base):
 
         time.sleep(self.delay2)
 
-        keyboard.send("esc")
+        keyboard.press(Key.esc)
 
         time.sleep(5)
 
