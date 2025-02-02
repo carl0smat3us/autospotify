@@ -8,11 +8,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
+from exceptions import RetryAgainError
 from settings import spotify_supported_languages
-
-# from shared.proxies import get_a_working_proxy
-
-# proxy = get_a_working_proxy()
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
@@ -23,6 +20,9 @@ class Base:
         self.delay2 = random.uniform(5, 14)
 
         self.faker = Faker()
+
+        self.retries = 0
+        self.max_retries = 5
 
         self.username = username
         self.password = password
@@ -41,7 +41,6 @@ class Base:
         browser_options.add_argument("--lang=en-US,en;q=0.9")
         browser_options.add_argument("--disable-notifications")
         browser_options.add_argument(f"--user-agent={ua.random}")
-        # browser_options.add_argument(f"--proxy-server={proxy}")
         browser_options.add_argument("--disable-dev-shm-usage")
         browser_options.add_argument("--incognito")
         browser_options.add_argument("--disable-cookies")
@@ -93,11 +92,10 @@ class Base:
 
     def captcha_solver(self):
         if "challenge.spotify.com" in self.driver.current_url:
-            print("CAPTCHA detected!")
-            print("A CAPTCHA solver has not been implemented. Exiting the process...")
-            self.driver.quit()
-        else:
-            print("No CAPTCHA detected. Proceeding with the process...")
+            print("CAPTCHA détecté !")
+            print("Aucun solveur CAPTCHA implémenté. Arrêt du processus...")
+
+            raise RetryAgainError("Captcha non implémenté !")
 
     def click_next(self):
         submit_button = self.driver.find_element(
@@ -111,6 +109,6 @@ class Base:
                 By.ID, "onetrust-accept-btn-handler"
             )
             cookies_button.click()
-        except Exception as e:
-            print(f"Error accepting cookies: {e}")
-            self.driver.quit()
+        except Exception:
+            # Popup de cookie non trouvé, passage à l'étape suivante...
+            pass

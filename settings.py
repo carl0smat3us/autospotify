@@ -25,3 +25,21 @@ spotify_supported_languages = [
     "da-DK",
     "no-NO",
 ]
+
+spotify_supported_domains = [
+    "proton.me",
+    "gmail.com",
+    "outlook.com",
+    "outlook.be",
+    "free.fr",
+    "icloud.com",
+]
+
+spotify_favorits_artists = [
+    "Post Malone",
+    "Gims",
+    "Portugal Man",
+    "Kendrick Lamar",
+    "Eminem",
+    "Justin Bieber",
+]

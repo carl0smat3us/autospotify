@@ -32,6 +32,7 @@ def main():
         print("\nQue voulez-vous faire ?")
         print("1 - Créer des comptes Spotify")
         print("2 - Écouter une playlist Spotify")
+
         action = input("Entrez votre choix (1/2) : ").strip()
 
         if action == "1":
@@ -50,11 +51,9 @@ def main():
                     print("Veuillez entrer un nombre valide.")
 
             for i in range(num_accounts):
-                print(f"Création du compte {i + 1} sur {num_accounts}...")
+                print(f"\nCréation du compte {i + 1} sur {num_accounts}...")
                 spotify_signup = SpotifySignup(headless=headless)
                 spotify_signup.run()
-
-            print("\nProcessus de création de compte terminé.")
 
         elif action == "2":
             print("\nDémarrage de l'interaction avec la playlist Spotify...")
@@ -62,10 +61,8 @@ def main():
 
             users = read_users_from_json()
 
-            # Shuffle the users for random selection
             random.shuffle(users)
 
-            # Ask for the number of concurrent executions
             while True:
                 try:
                     concurrent_executions = int(
@@ -86,8 +83,7 @@ def main():
                     if index + j < len(users):
                         user = users[index + j]
 
-                        print()
-                        print(f"({index + j + 1}/{len(users)})")
+                        print(f"\n({index + j + 1}/{len(users)})")
 
                         spotify_playlist = SpotifyPlaylist(
                             username=user["username"],
@@ -98,11 +94,10 @@ def main():
                         )
                         tasks.append(spotify_playlist.run())
                 asyncio.gather(*tasks)
-
-            print("\nProcessus d'interaction avec la playlist terminé.")
-
         else:
             print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
+
+        print("Processus terminé.")
 
     except Exception as e:
         print(f"\nUne erreur s'est produite : {e}")
