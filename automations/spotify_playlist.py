@@ -44,6 +44,8 @@ class SpotifyPlaylist(Base):
 
         self.accept_cookies()
 
+        self.choose_an_artist()
+
         time.sleep(self.delay)
 
         self.driver.get(self.playlist_url)
