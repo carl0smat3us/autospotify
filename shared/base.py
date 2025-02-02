@@ -90,16 +90,7 @@ class Base:
         self.driver.execute_script("arguments[0].click();", play_button)
 
         if user_index is not None:
-            print(
-                f"🎧 Le {user_index}° utilisateur est en train d'écouter la playlist. 🎶"
-            )
-
-    def captcha_solver(self):
-        if "challenge.spotify.com" in self.driver.current_url:
-            print("CAPTCHA détecté !")
-            print("Aucun solveur CAPTCHA implémenté. Arrêt du processus...")
-
-            raise RetryAgainError("Captcha non implémenté !")
+            print(f"🎧 Le {user_index}° bot est en train d'écouter la playlist. 🎶")
 
     def click_next(self):
         submit_button = self.driver.find_element(
@@ -143,10 +134,31 @@ class Base:
 
     def accept_cookies(self):
         try:
-            cookies_button = WebDriverWait(self.driver, 20).until(
+            cookies_button = WebDriverWait(self.driver, 5).until(
                 EC.visibility_of_element_located((By.ID, "onetrust-accept-btn-handler"))
             )
             cookies_button.click()
         except Exception:
             # Popup de cookie non trouvé, passage à l'étape suivante...
             pass
+
+    def verify_page(self):
+        time.sleep(15)  # Wait till the page full load
+
+        page_text = self.driver.find_element(By.TAG_NAME, "body").text
+
+        if "upstream request timeout" in page_text.lower():
+            raise RetryAgainError(
+                "The page indicates an upstream request timeout. Arrêt du processus..."
+            )
+        elif "challenge.spotify.com" in self.driver.current_url:
+            print(
+                "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
+            )
+            raise RetryAgainError("Captcha non implémenté !")
+
+        self.accept_cookies()
+
+    def get_page(self, url: str):
+        self.driver.get(url)
+        self.verify_page()

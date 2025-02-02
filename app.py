@@ -1,4 +1,3 @@
-import asyncio
 import os
 import random
 
@@ -57,7 +56,7 @@ def main():
 
         elif action == "2":
             print("\nDémarrage de l'interaction avec la playlist Spotify...")
-            playlist_url = input("Veuillez entrer l'URL de la playlist : ").strip()
+            track_url = input("Veuillez entrer l'URL de la playlist : ").strip()
 
             users = read_users_from_json()
 
@@ -65,7 +64,7 @@ def main():
                 try:
                     num_accounts = int(
                         input(
-                            f"Combien d'utilizateurs voulez-vous pour écouter? (1 à {len(users)}): "
+                            f"Combien de bots voulez-vous pour écouter? (1 à {len(users)}): "
                         ).strip()
                     )
                     if 1 <= num_accounts <= len(users):
@@ -79,12 +78,12 @@ def main():
                 users_index = random.randint(0, len(users))
                 user = users[users_index]
 
-                print(f"\n({i + 1}/{num_accounts})")
+                print(f"\Streaming du compte {i + 1} sur {num_accounts}...")
 
                 spotify_playlist = SpotifyPlaylist(
                     username=user["username"],
                     password=user["password"],
-                    playlist_url=playlist_url,
+                    track_url=track_url,
                     user_index=users_index + 1,
                     headless=headless,
                 )

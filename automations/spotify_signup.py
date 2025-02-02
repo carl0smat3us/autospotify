@@ -21,7 +21,7 @@ class SpotifySignup(Base):
             password=faker.password(),
             headless=headless,
         )
-        self.url = settings.spotify_registration_address
+        self.url = settings.spotify_signup_url
 
     def fill_username(self):
         username_input = self.driver.find_element(By.ID, "username")
@@ -63,10 +63,6 @@ class SpotifySignup(Base):
         self.click_next()
 
     def create_account(self):
-        self.accept_cookies()
-        time.sleep(2)
-
-        # Create the account
         self.fill_username()
         time.sleep(self.delay)
 
@@ -76,11 +72,9 @@ class SpotifySignup(Base):
         self.fill_personal_details()
         time.sleep(self.delay)
 
-        self.click_next()  # Confirm
+        self.click_next()
 
-        time.sleep(20)
-
-        self.captcha_solver()
+        self.verify_page()
 
         print(f"Le compte {self.username} spotify a etait generé.")
 
@@ -89,7 +83,7 @@ class SpotifySignup(Base):
     def run(self):
         while True:
             try:
-                self.driver.get(self.url)
+                self.get_page(self.url)
                 time.sleep(5)
                 self.create_account()
                 break  # Exit loop after successful execution
@@ -97,7 +91,9 @@ class SpotifySignup(Base):
                 self.retries += 1
 
                 if self.retries <= self.max_retries:
-                    print(f"({self.retries}) Nouvelle tentative en cours...")
+                    print(
+                        f"({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
+                    )
                     continue
 
                 print("Nombre maximal de tentatives atteint.")
