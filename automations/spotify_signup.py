@@ -62,44 +62,6 @@ class SpotifySignup(Base):
 
         self.click_next()
 
-    def choose_an_artist(self):
-        try:  # Check if Spotify displays a pop-up asking to choose favorite artists
-            self.driver.find_element(
-                By.XPATH,
-                '//*[@data-testid="popover"]/div[@class="encore-announcement-set" and @role="tooltip"]',
-            )
-
-            search_bar = self.driver.find_element(
-                By.XPATH,
-                "//*[@id='global-nav-bar']/div[2]/div/div/span/div/form/div[2]/input",
-            )
-
-            search_bar.send_keys(random.choice(settings.spotify_favorits_artists))
-
-            time.sleep(15)
-
-            artists_table = self.driver.find_element(
-                By.XPATH,
-                "//span[@role='presentation' and @aria-expanded='true' and @data-open='true']",
-            ).find_element(By.XPATH, "..")
-
-            time.sleep(5)
-
-            first_artist = artists_table.find_element(
-                By.XPATH, './div[@span="presentation"][1]'
-            )
-
-            first_artist.click()
-
-            time.sleep(15)
-
-            self.play()
-
-            time.sleep(50)
-        except:
-            # No pop-up detected: Proceeding with the process...
-            pass
-
     def create_account(self):
         self.accept_cookies()
         time.sleep(2)
@@ -119,8 +81,6 @@ class SpotifySignup(Base):
         time.sleep(20)
 
         self.captcha_solver()
-
-        self.choose_an_artist()
 
         print(f"Le compte {self.username} spotify a etait generé.")
 
