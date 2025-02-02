@@ -1,5 +1,6 @@
 import time
 
+import keyboard
 from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -9,10 +10,6 @@ from exceptions import RetryAgainError
 from shared.base import Base
 
 faker = Faker()
-
-from pynput.keyboard import Controller, Key
-
-keyboard = Controller()
 
 
 class SpotifyPlaylist(Base):
@@ -47,20 +44,27 @@ class SpotifyPlaylist(Base):
 
         self.accept_cookies()
 
-        self.choose_an_artist()
-
         time.sleep(self.delay)
 
         self.driver.get(self.playlist_url)
 
-        time.sleep(self.delay2)
-
-        keyboard.press(Key.esc)
-
         time.sleep(5)
 
-        self.play(self.user_index)
+        keyboard.send("esc")
 
+        time.sleep(15)
+
+        self.choose_an_artist()  # Chose a favorite artist if Spotify asks
+
+        time.sleep(15)
+
+        if (
+            "/artist" in self.driver.current_url
+        ):  # If user was listening to them favorite artist
+            self.driver.get(self.playlist_url)
+            time.sleep(15)
+
+        self.play(self.user_index)
         self.monitor()
 
     def monitor(self):

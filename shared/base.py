@@ -5,8 +5,11 @@ import pytz
 from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
@@ -104,48 +107,44 @@ class Base:
         )
         submit_button.click()
 
+    def listen_to_random_artist(self):
+        search_bar = self.driver.find_element(
+            By.XPATH,
+            "//*[@data-testid='search-input']",
+        )
+
+        search_bar.send_keys(random.choice(settings.spotify_favorits_artists))
+
+        time.sleep(15)
+
+        first_artist = self.driver.find_element(
+            By.XPATH, "//span[@role='presentation']/following-sibling::*[1]"
+        )
+
+        time.sleep(5)
+
+        first_artist.click()
+
+        time.sleep(10)
+
+        self.play()
+
     def choose_an_artist(self):
         try:  # Check if Spotify displays a pop-up asking to choose favorite artists
             self.driver.find_element(
                 By.XPATH,
-                '//*[@data-testid="popover"]/div[@class="encore-announcement-set" and @role="tooltip"]',
+                '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
             )
+        except NoSuchElementException:
+            print("No pop-up detected!")
+            return
 
-            search_bar = self.driver.find_element(
-                By.XPATH,
-                "//*[@id='global-nav-bar']/div[2]/div/div/span/div/form/div[2]/input",
-            )
-
-            search_bar.send_keys(random.choice(settings.spotify_favorits_artists))
-
-            time.sleep(15)
-
-            artists_table = self.driver.find_element(
-                By.XPATH,
-                "//span[@role='presentation' and @aria-expanded='true' and @data-open='true']",
-            ).find_element(By.XPATH, "..")
-
-            time.sleep(5)
-
-            first_artist = artists_table.find_element(
-                By.XPATH, './div[@span="presentation"][1]'
-            )
-
-            first_artist.click()
-
-            time.sleep(15)
-
-            self.play()
-
-            time.sleep(50)
-        except:
-            # No pop-up detected: Proceeding with the process...
-            pass
+        self.listen_to_random_artist()
 
     def accept_cookies(self):
         try:
-            cookies_button = self.driver.find_element(
-                By.ID, "onetrust-accept-btn-handler"
+            cookies_button = WebDriverWait(self.driver, 20).until(
+                EC.visibility_of_element_located((By.ID, "onetrust-accept-btn-handler"))
             )
             cookies_button.click()
         except Exception:
