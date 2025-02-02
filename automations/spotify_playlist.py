@@ -1,5 +1,6 @@
 import time
 
+import keyboard
 from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -10,28 +11,24 @@ from shared.base import Base
 
 faker = Faker()
 
-from pynput.keyboard import Controller, Key
-
-keyboard = Controller()
-
 
 class SpotifyPlaylist(Base):
     def __init__(
         self,
         username: str,
         password: str,
-        playlist_url: str,
+        track_url: str,
         user_index: int,
         headless=False,
     ):
         super().__init__(
             username=username, password=password, headless=headless, random_lang=False
         )
-        self.url = settings.spotify_login_address
-        self.playlist_url = playlist_url
+        self.url = settings.spotify_login_url
+        self.track_url = track_url
         self.user_index = user_index
 
-    def play_playlist(self):
+    def login(self):
         username_input = self.driver.find_element(By.ID, "login-username")
         username_input.send_keys(self.username)
 
@@ -41,27 +38,36 @@ class SpotifyPlaylist(Base):
         login_button = self.driver.find_element(By.ID, "login-button")
         login_button.click()  # Click the button
 
-        time.sleep(15)
-
-        self.captcha_solver()
-
-        self.accept_cookies()
-
-        self.choose_an_artist()
-
+    def play_playlist(self):
+        self.login()
+        self.verify_page()
         time.sleep(self.delay)
 
-        self.driver.get(self.playlist_url)
+        self.get_page(self.track_url)
 
-        time.sleep(self.delay2)
-
-        keyboard.press(Key.esc)
+        keyboard.send("esc")
 
         time.sleep(5)
 
-        self.play(self.user_index)
+        self.choose_an_artist()  # Chose a favorite artist if Spotify asks
 
+        time.sleep(15)
+
+        if (
+            "/artist" in self.driver.current_url
+        ):  # If user was listening to them favorite artist
+            self.get_page(self.track_url)
+
+        self.show_track_info()
+        self.play(self.user_index)
         self.monitor()
+
+    def show_track_info(self):
+        self.title = self.driver.find_element(
+            By.XPATH, '//*[@data-testid="entityTitle"]/h1'
+        )
+
+        print(f"🎶 Les bots écoutent la playlist : {self.title.text} 🎧")
 
     def monitor(self):
         """Continuously monitor the last song's progress and play state."""
@@ -97,7 +103,7 @@ class SpotifyPlaylist(Base):
 
                 if percentage > 90:
                     print(
-                        f"🎧 Le {self.user_index}° utilisateur a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
+                        f"🎧 Le {self.user_index}° bot a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
                     )
 
                     break
@@ -108,7 +114,7 @@ class SpotifyPlaylist(Base):
     def run(self):
         while True:
             try:
-                self.driver.get(self.url)
+                self.get_page(self.url)
                 time.sleep(5)
                 self.play_playlist()
                 break  # Exit loop after successful execution

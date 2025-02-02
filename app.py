@@ -1,4 +1,3 @@
-import asyncio
 import os
 import random
 
@@ -57,43 +56,38 @@ def main():
 
         elif action == "2":
             print("\nDémarrage de l'interaction avec la playlist Spotify...")
-            playlist_url = input("Veuillez entrer l'URL de la playlist : ").strip()
+            track_url = input("Veuillez entrer l'URL de la playlist : ").strip()
 
             users = read_users_from_json()
 
-            random.shuffle(users)
-
             while True:
                 try:
-                    concurrent_executions = int(
+                    num_accounts = int(
                         input(
-                            f"Combien d'utilizateurs voulez-vous pour écouter? (1 à {len(users)}): "
+                            f"Combien de bots voulez-vous pour écouter? (1 à {len(users)}): "
                         ).strip()
                     )
-                    if 1 <= concurrent_executions <= len(users):
+                    if 1 <= num_accounts <= len(users):
                         break
                     else:
                         print(f"Veuillez entrer un nombre entre 1 et {len(users)}.")
                 except ValueError:
                     print("Veuillez entrer un nombre valide.")
 
-            for index in range(0, len(users), concurrent_executions):
-                tasks = []
-                for j in range(concurrent_executions):
-                    if index + j < len(users):
-                        user = users[index + j]
+            for i in range(num_accounts):
+                users_index = random.randint(0, len(users))
+                user = users[users_index]
 
-                        print(f"\n({index + j + 1}/{len(users)})")
+                print(f"\Streaming du compte {i + 1} sur {num_accounts}...")
 
-                        spotify_playlist = SpotifyPlaylist(
-                            username=user["username"],
-                            password=user["password"],
-                            playlist_url=playlist_url,
-                            user_index=users.index(user) + 1,
-                            headless=headless,
-                        )
-                        tasks.append(spotify_playlist.run())
-                asyncio.gather(*tasks)
+                spotify_playlist = SpotifyPlaylist(
+                    username=user["username"],
+                    password=user["password"],
+                    track_url=track_url,
+                    user_index=users_index + 1,
+                    headless=headless,
+                )
+                spotify_playlist.run()
         else:
             print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
 

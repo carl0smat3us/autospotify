@@ -1,12 +1,11 @@
-accounts_filename = "accounts.json"
-
-spotify_login_address = "https://www.spotify.com/login"
-
-spotify_registration_address = (
-    "https://www.spotify.com/signup?forward_url=https%3A%2F%2Fopen.spotify.com%2F"
-)
-
+accounts_file_path = "accounts.json"
 venv_dir = ".venv"
+
+spotify_login_url = "https://www.spotify.com/login"
+
+spotify_signup_url = (
+    "https://www.spotify.com/signup"
+)
 
 spotify_supported_languages = [
     "en-US",
