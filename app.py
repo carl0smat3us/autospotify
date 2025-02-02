@@ -67,7 +67,7 @@ def main():
                 try:
                     concurrent_executions = int(
                         input(
-                            f"Combien d'exécutions simultanées voulez-vous ? (1 à {len(users)}): "
+                            f"Combien d'utilizateurs voulez-vous pour écouter? (1 à {len(users)}): "
                         ).strip()
                     )
                     if 1 <= concurrent_executions <= len(users):
