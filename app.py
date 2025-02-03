@@ -78,7 +78,7 @@ def main():
                 users_index = random.randint(0, len(users))
                 user = users[users_index]
 
-                print(f"\Streaming du compte {i + 1} sur {num_accounts}...")
+                print(f"\nStreaming du compte {i + 1} sur {num_accounts}...")
 
                 spotify_playlist = SpotifyPlaylist(
                     username=user["username"],
