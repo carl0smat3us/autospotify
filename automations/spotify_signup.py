@@ -26,14 +26,14 @@ class SpotifySignup(Base):
     def fill_username(self):
         username_input = self.driver.find_element(By.ID, "username")
         username_input.send_keys(self.username)
-        time.sleep(1)
-        self.click_next()
+
+        self.submit(self.click_next)
 
     def fill_password(self):
         password_input = self.driver.find_element(By.NAME, "new-password")
         password_input.send_keys(self.password)
-        time.sleep(self.delay2)
-        self.click_next()
+
+        self.submit(self.click_next)
 
     def fill_personal_details(self):
         # Fill Name
@@ -58,33 +58,20 @@ class SpotifySignup(Base):
         )
         gender_option.click()
 
-        time.sleep(1)
-
-        self.click_next()
+        self.submit(self.click_next)
 
     def create_account(self):
         self.fill_username()
-        time.sleep(self.delay)
-
         self.fill_password()
-        time.sleep(self.delay)
-
         self.fill_personal_details()
-        time.sleep(self.delay)
 
-        self.click_next()
-
-        self.verify_page()
-
-        print(f"Le compte {self.username} spotify a etait generé.")
-
+        self.submit(self.click_next)
         insert_user_to_json(self.username, self.password)
 
     def run(self):
         while True:
             try:
                 self.get_page(self.url)
-                time.sleep(5)
                 self.create_account()
                 break  # Exit loop after successful execution
             except RetryAgainError:

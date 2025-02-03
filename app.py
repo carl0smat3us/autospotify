@@ -75,7 +75,7 @@ def main():
                     print("Veuillez entrer un nombre valide.")
 
             for i in range(num_accounts):
-                users_index = random.randint(0, len(users))
+                users_index = random.randint(0, len(users) - 1)
                 user = users[users_index]
 
                 print(f"\nStreaming du compte {i + 1} sur {num_accounts}...")

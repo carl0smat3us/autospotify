@@ -8,6 +8,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
@@ -20,9 +21,9 @@ ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
 class Base:
     def __init__(self, username: str, password: str, headless=False, random_lang=True):
-        self.delay = random.uniform(2, 6)
-        self.delay2 = random.uniform(5, 14)
-
+        self.delay_page_loading = 10
+        self.delay_after_page_loading = self.delay_before_submit = 5
+        
         self.faker = Faker()
 
         self.retries = 0
@@ -92,12 +93,6 @@ class Base:
         if user_index is not None:
             print(f"🎧 Le {user_index}° bot est en train d'écouter la playlist. 🎶")
 
-    def click_next(self):
-        submit_button = self.driver.find_element(
-            By.CSS_SELECTOR, "[data-testid='submit']"
-        )
-        submit_button.click()
-
     def listen_to_random_artist(self):
         search_bar = self.driver.find_element(
             By.XPATH,
@@ -106,18 +101,13 @@ class Base:
 
         search_bar.send_keys(random.choice(settings.spotify_favorits_artists))
 
-        time.sleep(15)
+        time.sleep(self.delay_page_loading)
 
         first_artist = self.driver.find_element(
             By.XPATH, "//span[@role='presentation']/following-sibling::*[1]"
         )
 
-        time.sleep(5)
-
-        first_artist.click()
-
-        time.sleep(10)
-
+        self.submit(first_artist, 10)
         self.play()
 
     def choose_an_artist(self):
@@ -142,8 +132,23 @@ class Base:
             # Popup de cookie non trouvé, passage à l'étape suivante...
             pass
 
-    def verify_page(self):
-        time.sleep(15)  # Wait till the page full load
+    @property
+    def click_next(self):
+        submit_button = self.driver.find_element(
+            By.CSS_SELECTOR, "[data-testid='submit']"
+        )
+
+        return submit_button
+
+    def submit(self, element: WebElement, delay=5):
+        time.sleep(self.delay_before_submit)
+        element.click()
+        self.verify_page(delay)
+
+    def verify_page(self, delay=0):
+        time.sleep(
+            delay if delay != 0 else self.delay_page_loading
+        )  # Wait till the page full load
 
         page_text = self.driver.find_element(By.TAG_NAME, "body").text
 
@@ -158,7 +163,9 @@ class Base:
             raise RetryAgainError("Captcha non implémenté !")
 
         self.accept_cookies()
+        time.sleep(self.delay_after_page_loading)
 
     def get_page(self, url: str):
         self.driver.get(url)
         self.verify_page()
+        time.sleep(self.delay_after_page_loading)

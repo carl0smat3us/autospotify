@@ -49,6 +49,8 @@ def insert_user_to_json(username, password):
 
         write_users_to_json(users)
 
+        print(f"Le compte {username} spotify a etait generé.")
+
     except Exception as e:
         print(f"Error inserting user: {e}")
         raise

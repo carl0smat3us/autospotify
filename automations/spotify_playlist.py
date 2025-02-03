@@ -36,13 +36,10 @@ class SpotifyPlaylist(Base):
         password_input.send_keys(self.password)
 
         login_button = self.driver.find_element(By.ID, "login-button")
-        login_button.click()  # Click the button
+        self.submit(login_button, self.delay_page_loading)
 
     def play_playlist(self):
         self.login()
-        self.verify_page()
-        time.sleep(self.delay)
-
         self.get_page(self.track_url)
 
         keyboard.send("esc")
@@ -51,7 +48,7 @@ class SpotifyPlaylist(Base):
 
         self.choose_an_artist()  # Chose a favorite artist if Spotify asks
 
-        time.sleep(15)
+        time.sleep(5)
 
         if (
             "/artist" in self.driver.current_url
@@ -115,7 +112,6 @@ class SpotifyPlaylist(Base):
         while True:
             try:
                 self.get_page(self.url)
-                time.sleep(5)
                 self.play_playlist()
                 break  # Exit loop after successful execution
             except RetryAgainError:

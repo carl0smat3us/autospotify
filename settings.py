@@ -3,9 +3,7 @@ venv_dir = ".venv"
 
 spotify_login_url = "https://www.spotify.com/login"
 
-spotify_signup_url = (
-    "https://www.spotify.com/signup"
-)
+spotify_signup_url = "https://www.spotify.com/signup"
 
 spotify_supported_languages = [
     "en-US",
