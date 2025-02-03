@@ -19,15 +19,6 @@ def main():
 
         print("Bienvenue dans le CLI d'automatisation Spotify !")
 
-        headless = (
-            input(
-                "Voulez-vous exécuter en mode sans interface graphique ? (1: Oui, 2: Non) : "
-            )
-            .strip()
-            .lower()
-            == "1"
-        )
-
         print("\nQue voulez-vous faire ?")
         print("1 - Créer des comptes Spotify")
         print("2 - Écouter une playlist Spotify")
@@ -36,6 +27,15 @@ def main():
 
         if action == "1":
             print("\nDémarrage de la création de compte Spotify...")
+
+            headless = (
+                input(
+                    "Voulez-vous exécuter en mode sans interface graphique ? (1: Oui, 2: Non) : "
+                )
+                .strip()
+                .lower()
+                == "1"
+            )
 
             while True:
                 try:
@@ -60,38 +60,31 @@ def main():
 
             users = read_users_from_json()
 
-            while True:
-                try:
-                    num_accounts = int(
-                        input(
-                            f"Combien de bots voulez-vous pour écouter? (1 à {len(users)}): "
-                        ).strip()
+            compte_nombre = 0
+
+            print("\nLa lecture de la playlist va être faite infiniment ♾️\n")
+
+            if len(users) >= 1:
+                while True:
+                    users_index = random.randint(0, len(users) - 1)
+                    user = users[users_index]
+
+                    print(f"\nLecture de la playlist pour la {compte_nombre + 1}ᵉ fois.")
+
+                    spotify_playlist = SpotifyPlaylist(
+                        username=user["username"],
+                        password=user["password"],
+                        track_url=track_url,
+                        user_index=users_index + 1,
                     )
-                    if 1 <= num_accounts <= len(users):
-                        break
-                    else:
-                        print(f"Veuillez entrer un nombre entre 1 et {len(users)}.")
-                except ValueError:
-                    print("Veuillez entrer un nombre valide.")
-
-            for i in range(num_accounts):
-                users_index = random.randint(0, len(users) - 1)
-                user = users[users_index]
-
-                print(f"\nStreaming du compte {i + 1} sur {num_accounts}...")
-
-                spotify_playlist = SpotifyPlaylist(
-                    username=user["username"],
-                    password=user["password"],
-                    track_url=track_url,
-                    user_index=users_index + 1,
-                    headless=headless,
-                )
-                spotify_playlist.run()
+                    spotify_playlist.run()
         else:
             print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
 
         print("Processus terminé.")
+
+    except KeyboardInterrupt:
+        print("\n🛑 Le script a été arrêté manuellement. ⏹️")
 
     except Exception as e:
         print(f"\nUne erreur s'est produite : {e}")

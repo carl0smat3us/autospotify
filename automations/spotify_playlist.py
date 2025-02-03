@@ -2,7 +2,7 @@ import time
 
 import keyboard
 from faker import Faker
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, NoSuchWindowException
 from selenium.webdriver.common.by import By
 
 import settings
@@ -111,9 +111,10 @@ class SpotifyPlaylist(Base):
     def run(self):
         while True:
             try:
-                self.get_page(self.url)
+                self.get_page(self.url, True)
                 self.play_playlist()
                 break  # Exit loop after successful execution
+
             except RetryAgainError:
                 self.retries += 1
 
@@ -123,6 +124,12 @@ class SpotifyPlaylist(Base):
 
                 print("Nombre maximal de tentatives atteint.")
                 break
+
+            except NoSuchWindowException:
+                print("🚫 La fenêtre a été fermée.")
+                self.driver.quit()
+                break
+
             except Exception as e:
                 print(f"Erreur pendant l'exécution du programme : {e}")
                 self.driver.quit()

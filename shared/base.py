@@ -11,10 +11,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
 from exceptions import RetryAgainError
+from shared.files import read_proxies_from_txt
+from shared.proxies import get_user_ip
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
@@ -23,14 +26,20 @@ class Base:
     def __init__(self, username: str, password: str, headless=False, random_lang=True):
         self.delay_page_loading = 10
         self.delay_after_page_loading = self.delay_before_submit = 5
-        
+
         self.faker = Faker()
 
         self.retries = 0
         self.max_retries = 5
 
+        self.cookies_accepted = False
+
         self.username = username
         self.password = password
+
+        self.proxies = read_proxies_from_txt()
+        self.proxy_url = None
+        self.ip = get_user_ip()
 
         browser_options = webdriver.ChromeOptions()
         browser_options.add_experimental_option(
@@ -40,18 +49,23 @@ class Base:
         browser_options.add_argument("--disable-logging")
         browser_options.add_argument("--log-level=3")
         browser_options.add_argument("--disable-infobars")
-        browser_options.add_argument("--disable-extensions")
         browser_options.add_argument("--window-size=1366,768")
         browser_options.add_argument("--start-maximized")
         browser_options.add_argument("--lang=en-US,en;q=0.9")
         browser_options.add_argument("--disable-notifications")
         browser_options.add_argument(f"--user-agent={ua.random}")
         browser_options.add_argument("--disable-dev-shm-usage")
-        browser_options.add_argument("--incognito")
         browser_options.add_argument("--disable-cookies")
         browser_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
+
+        if len(self.proxies) >= 1:
+            self.proxy_url = self.proxies[random.randint(0, len(self.proxies) - 1)]
+            proxy_helper = SeleniumAuthenticatedProxy(proxy_url=self.proxy_url)
+
+            # Enrich Chrome options with proxy authentication
+            proxy_helper.enrich_chrome_options(browser_options)
 
         if random_lang:
             browser_options.add_argument(
@@ -123,14 +137,17 @@ class Base:
         self.listen_to_random_artist()
 
     def accept_cookies(self):
-        try:
-            cookies_button = WebDriverWait(self.driver, 5).until(
-                EC.visibility_of_element_located((By.ID, "onetrust-accept-btn-handler"))
-            )
-            cookies_button.click()
-        except Exception:
-            # Popup de cookie non trouvé, passage à l'étape suivante...
-            pass
+        if not self.cookies_accepted:
+            try:
+                time.sleep(self.delay_before_submit)
+                cookies_button = self.driver.find_element(
+                    By.ID, "onetrust-accept-btn-handler"
+                )
+                cookies_button.click()
+                self.cookies_accepted = True
+            except NoSuchElementException:
+                # Popup de cookie non trouvé, passage à l'étape suivante...
+                pass
 
     @property
     def click_next(self):
@@ -156,6 +173,7 @@ class Base:
             raise RetryAgainError(
                 "The page indicates an upstream request timeout. Arrêt du processus..."
             )
+
         elif "challenge.spotify.com" in self.driver.current_url:
             print(
                 "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
@@ -165,7 +183,11 @@ class Base:
         self.accept_cookies()
         time.sleep(self.delay_after_page_loading)
 
-    def get_page(self, url: str):
+    def get_page(self, url: str, show_ip=False):
+        if show_ip:
+            self.ip = get_user_ip(self.proxy_url)
+            print(f"\n🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍\n")
+
         self.driver.get(url)
         self.verify_page()
         time.sleep(self.delay_after_page_loading)

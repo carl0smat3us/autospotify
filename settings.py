@@ -1,4 +1,5 @@
 accounts_file_path = "accounts.json"
+proxies_file_path = "proxies.txt"
 venv_dir = ".venv"
 
 spotify_login_url = "https://www.spotify.com/login"
