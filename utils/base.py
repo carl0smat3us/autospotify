@@ -8,7 +8,6 @@ from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
 from selenium.common.exceptions import (
-    ElementNotInteractableException,
     NoSuchElementException,
     NoSuchWindowException,
 )
@@ -135,9 +134,6 @@ class Base:
                 '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
             )
 
-        except ElementNotInteractableException:
-            return
-
         except NoSuchElementException:
             return
 
@@ -150,7 +146,7 @@ class Base:
                 By.ID, "onetrust-accept-btn-handler"
             )
             cookies_button.click()
-        except NoSuchElementException:
+        except Exception:
             # Popup de cookie non trouvé, passage à l'étape suivante...
             pass
 
