@@ -6,7 +6,7 @@ proxies_file_path = "proxies.txt"
 logs_paths = {"root": "logs", "screenshot": path.join("logs", "screenshot")}
 logs_file = "app.log"
 
-logging_datefmt="%Y-%m-%d %H:%M:%S"
+logging_datefmt = "%Y-%m-%d %H:%M:%S"
 
 venv_dir = ".venv"
 

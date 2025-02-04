@@ -4,8 +4,7 @@ import random
 from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
 from utils.files import read_users_from_json
-from utils.logs import logger
-from utils.logs import log_message
+from utils.logs import log_message, logger
 
 
 def clear_terminal():

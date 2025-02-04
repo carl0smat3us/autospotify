@@ -16,7 +16,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import settings
 from exceptions import RetryAgainError
 from utils.files import read_proxies_from_txt
-from utils.logs import logger, log_message
+from utils.logs import log_message, logger
 from utils.proxies import create_proxy_extension, get_user_ip
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
@@ -49,7 +49,6 @@ class Base:
         browser_options.add_argument("--disable-infobars")
         browser_options.add_argument("--window-size=1366,768")
         browser_options.add_argument("--start-maximized")
-        browser_options.add_argument("--mute-audio")
         browser_options.add_argument("--disable-notifications")
         browser_options.add_argument(f"--user-agent={ua.random}")
         browser_options.add_argument("--disable-dev-shm-usage")
@@ -168,15 +167,15 @@ class Base:
         page_text = self.driver.find_element(By.TAG_NAME, "body").text
 
         if "upstream request timeout" in page_text.lower():
-            raise RetryAgainError(
+            error_mesage = (
                 "The page indicates an upstream request timeout. Arrêt du processus..."
             )
+            raise RetryAgainError(error_mesage)
 
         elif "challenge.spotify.com" in self.driver.current_url:
-            log_message(
-                "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
-            )
-            raise RetryAgainError("Captcha non implémenté !")
+            error_mesage = "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
+            log_message(error_mesage)
+            raise RetryAgainError(error_mesage)
 
         self.accept_cookies()
         time.sleep(self.delay_after_page_loading)
