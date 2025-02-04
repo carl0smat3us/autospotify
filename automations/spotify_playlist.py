@@ -36,7 +36,7 @@ class SpotifyPlaylist(Base):
         login_button = self.driver.find_element(By.ID, "login-button")
         self.submit(login_button, self.delay_page_loading)
 
-        log_message(f"Logging in: {self.username}'s account!")
+        log_message(f"Connexion en cours : compte de {self.username} !")
 
     def action(self):
         self.login()

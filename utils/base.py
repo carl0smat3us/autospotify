@@ -32,8 +32,6 @@ class Base:
         self.retries = 0
         self.max_retries = 5
 
-        self.cookies_accepted = False
-
         self.username = username
         self.password = password
 
@@ -139,18 +137,15 @@ class Base:
         self.listen_to_random_artist()
 
     def accept_cookies(self):
-        if not self.cookies_accepted:
-            try:
-                time.sleep(self.delay_before_submit)
-                cookies_button = self.driver.find_element(
-                    By.ID, "onetrust-accept-btn-handler"
-                )
-                cookies_button.click()
-                self.cookies_accepted = True
-            except NoSuchElementException:
-                self.cookies_accepted = False
-                # Popup de cookie non trouvé, passage à l'étape suivante...
-                pass
+        try:
+            time.sleep(self.delay_before_submit)
+            cookies_button = self.driver.find_element(
+                By.ID, "onetrust-accept-btn-handler"
+            )
+            cookies_button.click()
+        except NoSuchElementException:
+            # Popup de cookie non trouvé, passage à l'étape suivante...
+            pass
 
     @property
     def click_next(self):
