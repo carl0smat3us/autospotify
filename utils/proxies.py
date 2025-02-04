@@ -4,6 +4,8 @@ import zipfile
 
 import requests
 
+from utils.logs import logger
+
 
 def transform_proxy(proxy: str, as_dict: bool = False):
     """
@@ -45,7 +47,7 @@ def get_user_ip(proxy_url: str = None) -> str:
         response.raise_for_status()
         return response.json().get("ip", "Unknown IP")
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching IP: {e}")
+        logger.error(f"Error fetching IP: {e}")
         return "Unknown IP"
 
 

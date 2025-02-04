@@ -5,6 +5,7 @@ from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
 from utils.files import read_users_from_json
 from utils.logs import logger
+from utils.logs import log_message
 
 
 def clear_terminal():
@@ -61,8 +62,8 @@ def main():
                     users_index = random.randint(0, len(users) - 1)
                     user = users[users_index]
 
-                    print(
-                        f"\nLecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
+                    log_message(
+                        f"Lecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
                     )
 
                     spotify_playlist = SpotifyPlaylist(
@@ -76,10 +77,10 @@ def main():
         else:
             print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
 
-        print("Processus terminé.")
+        log_message("Processus terminé.")
 
     except KeyboardInterrupt:
-        print("\n🛑 Le script a été arrêté manuellement. ⏹️")
+        log_message("🛑 Le script a été arrêté manuellement. ⏹️")
 
     except Exception as e:
         logger.error(f"Une erreur s'est produite : {e}")

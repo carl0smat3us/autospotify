@@ -16,7 +16,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import settings
 from exceptions import RetryAgainError
 from utils.files import read_proxies_from_txt
-from utils.logs import logger
+from utils.logs import logger, log_message
 from utils.proxies import create_proxy_extension, get_user_ip
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
@@ -61,8 +61,8 @@ class Base:
         )
 
         if len(self.proxies) == 0:
-            print(
-                "\n🚨 Aucun proxy détecté ! Le script utilisera votre propre IP sans camouflage. 🌐🔍\n"
+            log_message(
+                "🚨 Aucun proxy détecté ! Le script utilisera votre propre IP sans camouflage. 🌐🔍"
             )
 
         if len(self.proxies) >= 1:
@@ -106,7 +106,9 @@ class Base:
         self.driver.execute_script("arguments[0].click();", play_button)
 
         if user_index is not None:
-            print(f"🎧 Le {user_index}° bot est en train d'écouter la playlist. 🎶")
+            log_message(
+                f"🎧 Le {user_index}° bot est en train d'écouter la playlist. 🎶"
+            )
 
     def listen_to_random_artist(self):
         search_bar = self.driver.find_element(
@@ -176,7 +178,7 @@ class Base:
             )
 
         elif "challenge.spotify.com" in self.driver.current_url:
-            print(
+            log_message(
                 "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
             )
             raise RetryAgainError("Captcha non implémenté !")
@@ -187,7 +189,7 @@ class Base:
     def get_page(self, url: str, show_ip=False):
         if show_ip:
             self.ip = get_user_ip(self.proxy_url)
-            print(f"\n🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍\n")
+            log_message(f"🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍")
 
         self.driver.get(url)
         self.verify_page()
@@ -206,11 +208,10 @@ class Base:
         run()
 
     def logg_error(self, message: str):
-        logger.error(f"Proxy -> {self.proxy_url}  - Message -> {message}")
-
-        timestamp = datetime.datetime.now().strftime(self.logging_datafmt)
+        logger.error(message)
+        timestamp = datetime.datetime.now().strftime(settings.logging_datefmt)
         self.driver.save_screenshot(
-            path.join(settings.logs_paths["screenshot"], "{timestamp}.png")
+            path.join(settings.logs_paths["screenshot"], f"{timestamp}.png")
         )
 
     def run_preveting_errors(self, run):
@@ -224,17 +225,17 @@ class Base:
                 except RetryAgainError:
                     self.retries += 1
                     if self.retries <= self.max_retries:
-                        print(
+                        log_message(
                             f"🔄 ({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
                         )
                         continue
 
-                    print("Nombre maximal de tentatives atteint.")
+                    log_message("Nombre maximal de tentatives atteint.")
                     self.driver.quit()
                     break
 
                 except NoSuchWindowException:
-                    print("🚫 La fenêtre a été fermée.")
+                    log_message("🚫 La fenêtre a été fermée.")
                     self.driver.quit()
                     break
 
