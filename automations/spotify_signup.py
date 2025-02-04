@@ -78,6 +78,7 @@ class SpotifySignup(Base):
         self.check_terms_box()  # Checks the terms and conditions box if required
 
         self.submit(self.click_next)
+
         insert_user_to_json(self.username, self.password)
 
     def run(self):

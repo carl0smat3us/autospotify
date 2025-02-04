@@ -28,15 +28,6 @@ def main():
         if action == "1":
             print("\nDémarrage de la création de compte Spotify...")
 
-            headless = (
-                input(
-                    "Voulez-vous exécuter en mode sans interface graphique ? (1: Oui, 2: Non) : "
-                )
-                .strip()
-                .lower()
-                == "1"
-            )
-
             while True:
                 try:
                     num_accounts = int(
@@ -51,7 +42,7 @@ def main():
 
             for i in range(num_accounts):
                 print(f"\nCréation du compte {i + 1} sur {num_accounts}...")
-                spotify_signup = SpotifySignup(headless=headless)
+                spotify_signup = SpotifySignup()
                 spotify_signup.run()
 
         elif action == "2":
