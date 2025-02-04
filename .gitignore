@@ -173,5 +173,9 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Spotify accounts file
+# Accounts and proxies files
 accounts.json
+proxies.txt
+
+# Extensions
+proxy_auth_plugin.zip

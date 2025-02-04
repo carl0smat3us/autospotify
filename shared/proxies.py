@@ -1,57 +1,99 @@
-import random
+import os
+import tempfile
+import zipfile
 
 import requests
 
 
-def get_proxies():
-    url = "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&country=us,fr,be&protocol=http&proxy_format=protocolipport&format=text&anonymity=Elite,Anonymous&timeout=20000"
+def transform_proxy(proxy: str, as_dict: bool = False):
+    """
+    Transforms a proxy from 'host:port:user:pass' to 'http://user:pass@host:port' or a dictionary.
+    """
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        return response.text.splitlines()
-    except requests.exceptions.RequestException as e:
-        print(f"Error getting proxy list: {e}")
-        return []
+        host, port, user, password = proxy.split(":")
+        return (
+            {"host": host, "port": port, "user": user, "password": password}
+            if as_dict
+            else f"http://{user}:{password}@{host}:{port}"
+        )
+    except ValueError:
+        raise ValueError("Invalid proxy format. Expected format: host:port:user:pass")
 
 
-def test_proxy(proxy):
+def reverse_transform(proxy: str) -> str:
+    """Reverses a proxy from 'http://user:pass@host:port' format to 'host:port:user:pass'."""
     try:
-        proxy_dict = {"http": proxy, "https": proxy}
-        response = requests.get("http://www.spotify.com", proxies=proxy_dict, timeout=5)
-        response.raise_for_status()
-        return proxy
-    except requests.exceptions.RequestException:
-        return None
+        user_pass, host_port = proxy.split("@")
+        user, password = user_pass.replace("http://", "").split(":")
+        host, port = host_port.split(":")
+        return f"{host}:{port}:{user}:{password}"
+    except ValueError:
+        raise ValueError(
+            "Invalid proxy format. Expected format: http://user:pass@host:port"
+        )
 
 
-def get_a_working_proxy():
-    proxies = get_proxies()
-    if not proxies:
-        return None
-
-    while proxies:
-        proxy = random.choice(proxies)
-        result = test_proxy(proxy)
-        if result:
-            return result
-        else:
-            proxies.remove(proxy)
-            print(f"Proxy {proxy} failed. Trying another one.")
-
-    return None
-
-
-def get_user_ip(proxy: str):
-    proxy_dict = None
+def get_user_ip(proxy_url: str = None) -> str:
+    """
+    Fetches the public IP address using a proxy (if provided).
+    """
     try:
-        if proxy:
-            proxy_dict = {"http": proxy, "https": proxy}
+        proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
         response = requests.get(
-            "https://api.ipify.org?format=json", proxies=proxy_dict, timeout=10
+            "https://api.ipify.org?format=json", proxies=proxies, timeout=10
         )
         response.raise_for_status()
-        ip_data = response.json()
-        return ip_data.get("ip")
+        return response.json().get("ip", "Unknown IP")
     except requests.exceptions.RequestException as e:
-        print(f"Failed to get user IP using proxy {proxy}: {e}")
-        return None
+        print(f"Error fetching IP: {e}")
+        return "Unknown IP"
+
+
+def create_proxy_extension(proxy: str) -> str:
+    """
+    Creates a Chrome extension for proxy authentication using extracted proxy details.
+    """
+    proxy_data = transform_proxy(reverse_transform(proxy), as_dict=True)
+    manifest_json = """{
+        "version": "1.0.0",
+        "manifest_version": 2,
+        "name": "Proxy Auth Extension",
+        "permissions": ["proxy", "tabs", "unlimitedStorage", "storage", "<all_urls>", "webRequest", "webRequestBlocking"],
+        "background": {"scripts": ["background.js"]},
+        "minimum_chrome_version": "22.0.0"
+    }"""
+
+    background_js = f"""
+    var config = {{
+        mode: "fixed_servers",
+        rules: {{
+            singleProxy: {{
+                scheme: "http",
+                host: "{proxy_data['host']}",
+                port: parseInt({proxy_data['port']})
+            }},
+            bypassList: ["localhost"]
+        }}
+    }};
+
+    chrome.proxy.settings.set({{value: config, scope: "regular"}}, function() {{}});
+
+    chrome.webRequest.onAuthRequired.addListener(
+        function(details) {{
+            return {{
+                authCredentials: {{
+                    username: "{proxy_data['user']}",
+                    password: "{proxy_data['password']}"
+                }}
+            }};
+        }},
+        {{urls: ["<all_urls>"]}},
+        ["blocking"]
+    );
+    """
+    plugin_file_path = os.path.join(tempfile.gettempdir(), "proxy_auth_plugin.zip")
+
+    with zipfile.ZipFile(plugin_file_path, "w") as zp:
+        zp.writestr("manifest.json", manifest_json)
+        zp.writestr("background.js", background_js)
+    return plugin_file_path
