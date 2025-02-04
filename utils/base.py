@@ -49,7 +49,6 @@ class Base:
         browser_options.add_argument("--disable-infobars")
         browser_options.add_argument("--window-size=1366,768")
         browser_options.add_argument("--start-maximized")
-        browser_options.add_argument("--mute-audio")
         browser_options.add_argument("--disable-notifications")
         browser_options.add_argument(f"--user-agent={ua.random}")
         browser_options.add_argument("--disable-dev-shm-usage")
