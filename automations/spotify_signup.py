@@ -7,7 +7,6 @@ from selenium.webdriver.support.ui import Select
 import settings
 from utils.base import Base
 from utils.files import insert_user_to_json
-from utils.logs import logger
 
 faker = Faker()
 
@@ -82,9 +81,5 @@ class SpotifySignup(Base):
         self.check_terms_box()  # Checks the terms and conditions box if required
 
         self.submit(self.click_next, 20)
-
-        logger.info(
-            f"Account created: {{'username': {self.username}, 'password': {self.password}}} - Proxy url: {self.proxy_url}"
-        )
 
         insert_user_to_json(self.username, self.password)

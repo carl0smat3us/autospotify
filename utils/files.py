@@ -1,6 +1,7 @@
 import json
 
 import settings
+from utils.logs import log_message
 from utils.proxies import transform_proxy
 
 
@@ -69,7 +70,7 @@ def insert_user_to_json(username, password):
 
         write_users_to_json(users)
 
-        print(f"Le compte {username} spotify a etait generé.")
+        log_message(f"Le compte {username} spotify a etait generé.")
 
     except Exception as e:
         print(f"Error inserting user: {e}")

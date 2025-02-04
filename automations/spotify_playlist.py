@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 
 import settings
 from utils.base import Base
-from utils.logs import logger
+from utils.logs import log_message
 
 faker = Faker()
 
@@ -36,9 +36,7 @@ class SpotifyPlaylist(Base):
         login_button = self.driver.find_element(By.ID, "login-button")
         self.submit(login_button, self.delay_page_loading)
 
-        logger.info(
-            f"Logging in: {{'username': {self.username}, 'password': {self.password}}} - Proxy url: {self.proxy_url}"
-        )
+        log_message(f"Connexion en cours : compte de {self.username} !")
 
     def action(self):
         self.login()
@@ -66,7 +64,7 @@ class SpotifyPlaylist(Base):
             By.XPATH, '//*[@data-testid="entityTitle"]/h1'
         )
 
-        print(f"🎶 Les bots écoutent la playlist : {self.title.text} 🎧")
+        log_message(f"🎶 Les bots écoutent la playlist : {self.title.text} 🎧")
 
     def monitor(self):
         """Continuously monitor the last song's progress and play state."""
@@ -101,7 +99,7 @@ class SpotifyPlaylist(Base):
                 )
 
                 if percentage > 90:
-                    print(
+                    log_message(
                         f"🎧 Le {self.user_index}° bot a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
                     )
 
