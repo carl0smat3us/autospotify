@@ -7,10 +7,7 @@ import pytz
 from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    NoSuchWindowException,
-)
+from selenium.common.exceptions import NoSuchElementException, NoSuchWindowException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -121,7 +118,7 @@ class Base:
         time.sleep(self.delay_page_loading)
 
         first_artist = self.driver.find_element(
-            By.XPATH, "//span[@role='presentation']/following-sibling::*[1]"
+            By.XPATH, "(//span[@role='presentation'])[1]"
         )
 
         self.submit(first_artist, 10)

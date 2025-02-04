@@ -43,9 +43,6 @@ spotify_supported_domains = [
 
 spotify_favorits_artists = [
     "Post Malone",
-    "Gims",
-    "Portugal Man",
     "Kendrick Lamar",
-    "Eminem",
     "Justin Bieber",
 ]
