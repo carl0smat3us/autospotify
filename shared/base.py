@@ -9,9 +9,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
@@ -60,6 +57,11 @@ class Base:
         browser_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
+
+        if len(self.proxies) == 0:
+            print(
+                "\n🚨 Aucun proxy détecté ! Le script utilisera votre propre IP sans camouflage. 🌐🔍\n"
+            )
 
         if len(self.proxies) >= 1:
             self.proxy_url = self.proxies[random.randint(0, len(self.proxies) - 1)]

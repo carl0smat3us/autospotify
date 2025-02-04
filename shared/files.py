@@ -17,7 +17,6 @@ def read_proxies_from_txt():
         return proxies
 
     except FileNotFoundError:
-        print("Proxies file not found.")
         return []
     except Exception as e:
         print(f"Error reading TXT file: {e}")

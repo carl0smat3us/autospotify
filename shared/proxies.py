@@ -1,3 +1,5 @@
+import os
+import tempfile
 import zipfile
 
 import requests
@@ -89,8 +91,9 @@ def create_proxy_extension(proxy: str) -> str:
         ["blocking"]
     );
     """
-    plugin_file = "proxy_auth_plugin.zip"
-    with zipfile.ZipFile(plugin_file, "w") as zp:
+    plugin_file_path = os.path.join(tempfile.gettempdir(), "proxy_auth_plugin.zip")
+
+    with zipfile.ZipFile(plugin_file_path, "w") as zp:
         zp.writestr("manifest.json", manifest_json)
         zp.writestr("background.js", background_js)
-    return plugin_file
+    return plugin_file_path
