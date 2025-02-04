@@ -3,7 +3,8 @@ import random
 
 from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
-from shared.files import read_users_from_json
+from utils.files import read_users_from_json
+from utils.logs import logger
 
 
 def clear_terminal():
@@ -71,6 +72,7 @@ def main():
                         user_index=users_index + 1,
                     )
                     spotify_playlist.run()
+                    compte_nombre += 1
         else:
             print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
 
@@ -80,7 +82,7 @@ def main():
         print("\n🛑 Le script a été arrêté manuellement. ⏹️")
 
     except Exception as e:
-        print(f"\nUne erreur s'est produite : {e}")
+        logger.error(f"Une erreur s'est produite : {e}")
 
 
 if __name__ == "__main__":

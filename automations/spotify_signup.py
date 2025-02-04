@@ -1,15 +1,13 @@
 import random
-import time
 
 from faker import Faker
-from selenium.common.exceptions import NoSuchWindowException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 import settings
-from exceptions import RetryAgainError
-from shared.base import Base
-from shared.files import insert_user_to_json
+from utils.base import Base
+from utils.files import insert_user_to_json
+from utils.logs import logger
 
 faker = Faker()
 
@@ -19,7 +17,13 @@ class SpotifySignup(Base):
         super().__init__(
             username=f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
                 faker.unique.first_name().lower()}@{random.choice(settings.spotify_supported_domains)}""",
-            password=faker.password(),
+            password=faker.password(
+                length=15,
+                special_chars=True,
+                digits=True,
+                upper_case=True,
+                lower_case=True,
+            ),
             headless=headless,
         )
         self.url = settings.spotify_signup_url
@@ -70,42 +74,17 @@ class SpotifySignup(Base):
         except Exception:
             pass
 
-    def create_account(self):
+    def action(self):
         self.fill_username()
         self.fill_password()
         self.fill_personal_details()
 
         self.check_terms_box()  # Checks the terms and conditions box if required
 
-        self.submit(self.click_next)
+        self.submit(self.click_next, 20)
+
+        logger.info(
+            f"Account created: {{'username': {self.username}, 'password': {self.password}}} - Proxy url: {self.proxy_url}"
+        )
 
         insert_user_to_json(self.username, self.password)
-
-    def run(self):
-        while True:
-            try:
-                self.get_page(self.url, True)
-                self.create_account()
-                break  # Exit loop after successful execution
-
-            except RetryAgainError:
-                self.retries += 1
-
-                if self.retries <= self.max_retries:
-                    print(
-                        f"({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
-                    )
-                    continue
-
-                print("Nombre maximal de tentatives atteint.")
-                break
-
-            except NoSuchWindowException:
-                print("🚫 La fenêtre a été fermée.")
-                self.driver.quit()
-                break
-
-            except Exception as e:
-                print(f"Erreur pendant l'exécution du programme : {e}")
-                self.driver.quit()
-                break

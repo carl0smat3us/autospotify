@@ -1,5 +1,8 @@
+from os import path
+
 accounts_file_path = "accounts.json"
 proxies_file_path = "proxies.txt"
+logs_paths = {"root": "logs", "screenshot": path.join("logs", "screenshot")}
 venv_dir = ".venv"
 
 spotify_login_url = "https://www.spotify.com/login"

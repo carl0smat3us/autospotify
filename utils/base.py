@@ -1,11 +1,13 @@
+import datetime
 import random
 import time
+from os import path
 
 import pytz
 from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, NoSuchWindowException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -13,14 +15,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
 from exceptions import RetryAgainError
-from shared.files import read_proxies_from_txt
-from shared.proxies import create_proxy_extension, get_user_ip
+from utils.files import read_proxies_from_txt
+from utils.logs import logger
+from utils.proxies import create_proxy_extension, get_user_ip
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
 
 class Base:
-    def __init__(self, username: str, password: str, headless=False, random_lang=True):
+    def __init__(self, username: str, password: str, headless=False):
         self.delay_page_loading = 10
         self.delay_after_page_loading = self.delay_before_submit = 5
 
@@ -48,7 +51,6 @@ class Base:
         browser_options.add_argument("--disable-infobars")
         browser_options.add_argument("--window-size=1366,768")
         browser_options.add_argument("--start-maximized")
-        browser_options.add_argument("--lang=en-US,en;q=0.9")
         browser_options.add_argument("--mute-audio")
         browser_options.add_argument("--disable-notifications")
         browser_options.add_argument(f"--user-agent={ua.random}")
@@ -69,17 +71,14 @@ class Base:
 
             browser_options.add_extension(proxy_extension)
 
-        if random_lang:
-            browser_options.add_argument(
-                f"--lang={random.choice(settings.spotify_supported_languages)}"
-            )
-
         if headless:
             browser_options.add_argument("--headless")
 
         self.driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=browser_options
         )
+
+        self.driver.minimize_window()
 
         self.set_random_timezone()
         self.set_fake_geolocation()
@@ -133,7 +132,6 @@ class Base:
                 '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
             )
         except NoSuchElementException:
-            print("No pop-up detected!")
             return
 
         self.listen_to_random_artist()
@@ -162,7 +160,7 @@ class Base:
 
     def submit(self, element: WebElement, delay=5):
         time.sleep(self.delay_before_submit)
-        element.click()
+        self.driver.execute_script("arguments[0].click();", element)
         self.verify_page(delay)
 
     def verify_page(self, delay=0):
@@ -194,3 +192,55 @@ class Base:
         self.driver.get(url)
         self.verify_page()
         time.sleep(self.delay_after_page_loading)
+
+    def action(self):
+        # Run the automation
+        pass
+
+    def run(self):
+        def wrapper():
+            self.get_page(self.url, True)
+            self.action()
+
+        run = self.run_preveting_errors(wrapper)
+        run()
+
+    def logg_error(self, message: str):
+        logger.error(f"Proxy -> {self.proxy_url}  - Message -> {message}")
+
+        timestamp = datetime.datetime.now().strftime(self.logging_datafmt)
+        self.driver.save_screenshot(
+            path.join(settings.logs_paths["screenshot"], "{timestamp}.png")
+        )
+
+    def run_preveting_errors(self, run):
+        def inner_function(*args, **kwargs):
+            while True:
+                try:
+                    run(*args, **kwargs)
+                    self.driver.quit()
+                    break
+
+                except RetryAgainError:
+                    self.retries += 1
+                    if self.retries <= self.max_retries:
+                        print(
+                            f"🔄 ({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
+                        )
+                        continue
+
+                    print("Nombre maximal de tentatives atteint.")
+                    self.driver.quit()
+                    break
+
+                except NoSuchWindowException:
+                    print("🚫 La fenêtre a été fermée.")
+                    self.driver.quit()
+                    break
+
+                except Exception as e:
+                    self.logg_error(f"Error pendant l'execution de l'application: {e}")
+                    self.driver.quit()
+                    break
+
+        return inner_function

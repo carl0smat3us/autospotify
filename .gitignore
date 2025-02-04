@@ -179,3 +179,10 @@ proxies.txt
 
 # Extensions
 proxy_auth_plugin.zip
+
+# Logs
+logs/*.txt
+
+logs/screenshots/*.png
+logs/screenshots/*.jpg
+logs/screenshots/*.jpeg

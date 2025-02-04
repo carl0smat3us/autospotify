@@ -1,7 +1,7 @@
 import json
 
 import settings
-from shared.proxies import transform_proxy
+from utils.proxies import transform_proxy
 
 
 def read_proxies_from_txt():
