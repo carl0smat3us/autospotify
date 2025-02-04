@@ -3,7 +3,7 @@ from os import path
 accounts_file_path = "accounts.json"
 proxies_file_path = "proxies.txt"
 
-logs_paths = {"root": "logs", "screenshot": path.join("logs", "screenshot")}
+logs_paths = {"root": "logs", "screenshots": path.join("logs", "screenshots")}
 logs_file = "app.log"
 
 logging_datefmt = "%Y-%m-%d %H:%M:%S"

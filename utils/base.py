@@ -7,7 +7,11 @@ import pytz
 from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, NoSuchWindowException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchElementException,
+    NoSuchWindowException,
+)
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -130,6 +134,10 @@ class Base:
                 By.XPATH,
                 '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
             )
+
+        except ElementNotInteractableException:
+            return
+
         except NoSuchElementException:
             return
 
@@ -202,11 +210,17 @@ class Base:
         run()
 
     def logg_error(self, message: str):
-        logger.error(message)
-        timestamp = datetime.datetime.now().strftime(settings.logging_datefmt)
-        self.driver.save_screenshot(
-            path.join(settings.logs_paths["screenshot"], f"{timestamp}.png")
+        timestamp = (
+            datetime.datetime.now()
+            .strftime(settings.logging_datefmt)
+            .replace(" ", "_")
+            .replace(":", "_")
         )
+        screenshot_path = path.join(
+            settings.logs_paths["screenshots"], f"{timestamp}.png"
+        )
+        self.driver.save_screenshot(screenshot_path)
+        logger.error(message)
 
     def run_preveting_errors(self, run):
         def inner_function(*args, **kwargs):
