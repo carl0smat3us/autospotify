@@ -60,7 +60,9 @@ def main():
                     users_index = random.randint(0, len(users) - 1)
                     user = users[users_index]
 
-                    print(f"\nLecture de la playlist pour la {compte_nombre + 1}ᵉ fois.")
+                    print(
+                        f"\nLecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
+                    )
 
                     spotify_playlist = SpotifyPlaylist(
                         username=user["username"],

@@ -176,3 +176,6 @@ cython_debug/
 # Accounts and proxies files
 accounts.json
 proxies.txt
+
+# Extensions
+proxy_auth_plugin.zip

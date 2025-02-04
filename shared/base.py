@@ -17,7 +17,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import settings
 from exceptions import RetryAgainError
 from shared.files import read_proxies_from_txt
-from shared.proxies import get_user_ip
+from shared.proxies import create_proxy_extension, get_user_ip
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
@@ -63,10 +63,9 @@ class Base:
 
         if len(self.proxies) >= 1:
             self.proxy_url = self.proxies[random.randint(0, len(self.proxies) - 1)]
-            proxy_helper = SeleniumAuthenticatedProxy(proxy_url=self.proxy_url)
+            proxy_extension = create_proxy_extension(self.proxy_url)
 
-            # Enrich Chrome options with proxy authentication
-            proxy_helper.enrich_chrome_options(browser_options)
+            browser_options.add_extension(proxy_extension)
 
         if random_lang:
             browser_options.add_argument(
