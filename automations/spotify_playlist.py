@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 
 import settings
 from utils.base import Base
+from utils.logs import logger
 
 faker = Faker()
 
@@ -20,9 +21,7 @@ class SpotifyPlaylist(Base):
         user_index: int,
         headless=False,
     ):
-        super().__init__(
-            username=username, password=password, headless=headless, random_lang=False
-        )
+        super().__init__(username=username, password=password, headless=headless)
         self.url = settings.spotify_login_url
         self.track_url = track_url
         self.user_index = user_index
@@ -36,6 +35,10 @@ class SpotifyPlaylist(Base):
 
         login_button = self.driver.find_element(By.ID, "login-button")
         self.submit(login_button, self.delay_page_loading)
+
+        logger.info(
+            f"Logging in: {{'username': {self.username}, 'password': {self.password}}} - Proxy url: {self.proxy_url}"
+        )
 
     def action(self):
         self.login()

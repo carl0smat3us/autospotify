@@ -23,7 +23,7 @@ ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
 
 class Base:
-    def __init__(self, username: str, password: str, headless=False, random_lang=True):
+    def __init__(self, username: str, password: str, headless=False):
         self.delay_page_loading = 10
         self.delay_after_page_loading = self.delay_before_submit = 5
 
@@ -51,7 +51,6 @@ class Base:
         browser_options.add_argument("--disable-infobars")
         browser_options.add_argument("--window-size=1366,768")
         browser_options.add_argument("--start-maximized")
-        browser_options.add_argument("--lang=en-US,en;q=0.9")
         browser_options.add_argument("--mute-audio")
         browser_options.add_argument("--disable-notifications")
         browser_options.add_argument(f"--user-agent={ua.random}")
@@ -71,11 +70,6 @@ class Base:
             proxy_extension = create_proxy_extension(self.proxy_url)
 
             browser_options.add_extension(proxy_extension)
-
-        if random_lang:
-            browser_options.add_argument(
-                f"--lang={random.choice(settings.spotify_supported_languages)}"
-            )
 
         if headless:
             browser_options.add_argument("--headless")

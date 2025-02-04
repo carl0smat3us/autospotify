@@ -72,6 +72,7 @@ def main():
                         user_index=users_index + 1,
                     )
                     spotify_playlist.run()
+                    compte_nombre += 1
         else:
             print("\nChoix invalide. Veuillez entrer '1' ou '2'.")
 
