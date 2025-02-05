@@ -6,40 +6,44 @@ from selenium.webdriver.support.ui import Select
 
 import settings
 from utils.base import Base
-from utils.files import insert_user_to_json
+from utils.files import save_user
 
 faker = Faker()
 
 
 class SpotifySignup(Base):
-    def __init__(self, headless=False):
-        super().__init__(
-            username=f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
-                faker.unique.first_name().lower()}@{random.choice(settings.spotify_supported_domains)}""",
-            password=faker.password(
-                length=15,
-                special_chars=True,
-                digits=True,
-                upper_case=True,
-                lower_case=True,
-            ),
-            headless=headless,
+    def __init__(self):
+        username = f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
+                faker.unique.first_name().lower()}@{random.choice(settings.spotify_supported_domains)}"""
+
+        password = faker.password(
+            length=15,
+            special_chars=True,
+            digits=True,
+            upper_case=True,
+            lower_case=True,
         )
+
+        super().__init__(username=username, password=password)
         self.url = settings.spotify_signup_url
 
-    def fill_username(self):
+    def username_step(self):
         username_input = self.driver.find_element(By.ID, "username")
         username_input.send_keys(self.username)
 
         self.submit(self.click_next)
 
-    def fill_password(self):
+    def password_step(self):
+        self.verify_page_url("taper le mot de passe", "step=1")
+
         password_input = self.driver.find_element(By.NAME, "new-password")
         password_input.send_keys(self.password)
 
         self.submit(self.click_next)
 
-    def fill_personal_details(self):
+    def personal_details_step(self):
+        self.verify_page_url("taper le mot de passe", "step=2")
+
         # Fill Name
         name_input = self.driver.find_element(By.NAME, "displayName")
         name_input.send_keys(self.faker.name())
@@ -64,22 +68,28 @@ class SpotifySignup(Base):
 
         self.submit(self.click_next)
 
-    def check_terms_box(self):
-        try:
-            checkbox = self.driver.find_element(
-                By.XPATH, '//label[@for="terms-conditions-checkbox"]/span[1]'
-            )
-            self.driver.execute_script("arguments[0].click();", checkbox)
-        except Exception:
-            pass
+    def terms_step(self):
+        self.verify_page_url("taper le mot de passe", "step=3")
+
+        def check_terms_box():
+            try:
+                checkbox = self.driver.find_element(
+                    By.XPATH, '//label[@for="terms-conditions-checkbox"]/span[1]'
+                )
+                self.driver.execute_script("arguments[0].click();", checkbox)
+            except Exception:
+                pass
+
+        check_terms_box()  # Depends of user's country
 
     def action(self):
-        self.fill_username()
-        self.fill_password()
-        self.fill_personal_details()
+        self.username_step()
 
-        self.check_terms_box()  # Checks the terms and conditions box if required
+        self.password_step()
 
-        self.submit(self.click_next, 20)
+        self.personal_details_step()
 
-        insert_user_to_json(self.username, self.password)
+        self.terms_step()
+
+        self.submit(self.click_next, 60)
+        save_user(self.username, self.password)

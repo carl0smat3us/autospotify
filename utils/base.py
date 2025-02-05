@@ -7,14 +7,14 @@ import pytz
 from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, NoSuchWindowException
+from selenium.common.exceptions import NoSuchWindowException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
-from exceptions import RetryAgainError
+from exceptions import RetryAgainError, UnexpectedUrl
 from utils.files import read_proxies_from_txt
 from utils.logs import log_message, logger
 from utils.proxies import create_proxy_extension, get_user_ip
@@ -23,7 +23,7 @@ ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
 
 class Base:
-    def __init__(self, username: str, password: str, headless=False):
+    def __init__(self, username: str, password: str):
         self.delay_page_loading = 10
         self.delay_after_page_loading = self.delay_before_submit = 5
 
@@ -68,14 +68,9 @@ class Base:
 
             browser_options.add_extension(proxy_extension)
 
-        if headless:
-            browser_options.add_argument("--headless")
-
         self.driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=browser_options
         )
-
-        self.driver.minimize_window()
 
         self.set_random_timezone()
         self.set_fake_geolocation()
@@ -107,35 +102,6 @@ class Base:
                 f"🎧 Le {user_index}° bot est en train d'écouter la playlist. 🎶"
             )
 
-    def listen_to_random_artist(self):
-        search_bar = self.driver.find_element(
-            By.XPATH,
-            "//*[@data-testid='search-input']",
-        )
-
-        search_bar.send_keys(random.choice(settings.spotify_favorits_artists))
-
-        time.sleep(self.delay_page_loading)
-
-        first_artist = self.driver.find_element(
-            By.XPATH, "(//span[@role='presentation'])[1]"
-        )
-
-        self.submit(first_artist, 10)
-        self.play()
-
-    def choose_an_artist(self):
-        try:  # Check if Spotify displays a pop-up asking to choose favorite artists
-            self.driver.find_element(
-                By.XPATH,
-                '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
-            )
-
-        except NoSuchElementException:
-            return
-
-        self.listen_to_random_artist()
-
     def accept_cookies(self):
         try:
             time.sleep(self.delay_before_submit)
@@ -147,6 +113,16 @@ class Base:
             # Popup de cookie non trouvé, passage à l'étape suivante...
             pass
 
+    def verify_page_url(self, step: str, keyword: int):
+        if keyword not in self.driver.current_url:
+            raise UnexpectedUrl(
+                "❌ L'utilisateur n'est pas arrivé à la destination attendue !"
+            )
+
+        log_message(
+            f"✅ L'utilisateur est à l'étape '{step}' de la création du compte 🎯"
+        )
+
     @property
     def click_next(self):
         submit_button = self.driver.find_element(
@@ -155,9 +131,14 @@ class Base:
 
         return submit_button
 
-    def submit(self, element: WebElement, delay=5):
+    def submit(self, element: WebElement, delay=5, use_javascript=True):
         time.sleep(self.delay_before_submit)
-        self.driver.execute_script("arguments[0].click();", element)
+
+        if use_javascript:
+            self.driver.execute_script("arguments[0].click();", element)
+        else:
+            element.click()
+
         self.verify_page(delay)
 
     def verify_page(self, delay=0):
@@ -168,15 +149,14 @@ class Base:
         page_text = self.driver.find_element(By.TAG_NAME, "body").text
 
         if "upstream request timeout" in page_text.lower():
-            error_mesage = (
+            raise RetryAgainError(
                 "The page indicates an upstream request timeout. Arrêt du processus..."
             )
-            raise RetryAgainError(error_mesage)
 
         elif "challenge.spotify.com" in self.driver.current_url:
-            error_mesage = "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
-            log_message(error_mesage)
-            raise RetryAgainError(error_mesage)
+            raise RetryAgainError(
+                "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
+            )
 
         self.accept_cookies()
         time.sleep(self.delay_after_page_loading)

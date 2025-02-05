@@ -185,4 +185,7 @@ logs/*.txt
 
 logs/screenshots/*.png
 logs/screenshots/*.jpg
-logs/screenshots/*.jpeg
+logs/screenshots/*.jpegz
+
+# Guides
+instruction.txt
