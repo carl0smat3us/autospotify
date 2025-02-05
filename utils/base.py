@@ -23,7 +23,7 @@ ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
 
 class Base:
-    def __init__(self, username: str, password: str, headless=False):
+    def __init__(self, username: str, password: str):
         self.delay_page_loading = 10
         self.delay_after_page_loading = self.delay_before_submit = 5
 
@@ -67,9 +67,6 @@ class Base:
             proxy_extension = create_proxy_extension(self.proxy_url)
 
             browser_options.add_extension(proxy_extension)
-
-        if headless:
-            browser_options.add_argument("--headless")
 
         self.driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=browser_options
@@ -134,9 +131,14 @@ class Base:
 
         return submit_button
 
-    def submit(self, element: WebElement, delay=5):
+    def submit(self, element: WebElement, delay=5, use_javascript=True):
         time.sleep(self.delay_before_submit)
-        self.driver.execute_script("arguments[0].click();", element)
+
+        if use_javascript:
+            self.driver.execute_script("arguments[0].click();", element)
+        else:
+            element.click()
+
         self.verify_page(delay)
 
     def verify_page(self, delay=0):

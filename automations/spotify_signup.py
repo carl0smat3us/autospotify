@@ -12,19 +12,19 @@ faker = Faker()
 
 
 class SpotifySignup(Base):
-    def __init__(self, headless=False):
-        super().__init__(
-            username=f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
-                faker.unique.first_name().lower()}@{random.choice(settings.spotify_supported_domains)}""",
-            password=faker.password(
-                length=15,
-                special_chars=True,
-                digits=True,
-                upper_case=True,
-                lower_case=True,
-            ),
-            headless=headless,
+    def __init__(self):
+        username = f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
+                faker.unique.first_name().lower()}@{random.choice(settings.spotify_supported_domains)}"""
+
+        password = faker.password(
+            length=15,
+            special_chars=True,
+            digits=True,
+            upper_case=True,
+            lower_case=True,
         )
+
+        super().__init__(username=username, password=password)
         self.url = settings.spotify_signup_url
 
     def username_step(self):
