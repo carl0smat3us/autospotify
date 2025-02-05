@@ -120,7 +120,7 @@ class Base:
             )
 
         log_message(
-            f"✅ L'utilisateur est à l'étape '{step}' de la création du compte 🎯"
+            f"✅ L'utilisateur est à l'étape '{step}' 🎯"
         )
 
     @property
@@ -203,8 +203,9 @@ class Base:
                     self.driver.quit()
                     break
 
-                except RetryAgainError:
+                except RetryAgainError as e:
                     self.retries += 1
+                    log_message(e)
                     if self.retries <= self.max_retries:
                         log_message(
                             f"🔄 ({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
