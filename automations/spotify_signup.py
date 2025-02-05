@@ -91,5 +91,5 @@ class SpotifySignup(Base):
 
         self.terms_step()
 
-        self.submit(self.click_next, 20)
+        self.submit(self.click_next, 60)
         save_user(self.username, self.password)
