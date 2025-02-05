@@ -50,7 +50,7 @@ def write_users_to_json(users):
         raise
 
 
-def insert_user_to_json(username, password):
+def save_user(username, password):
     """
     Insert a new user into the JSON file.
     If the user already exists, this function does nothing.

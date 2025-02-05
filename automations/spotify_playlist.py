@@ -1,3 +1,4 @@
+import random
 import time
 
 import keyboard
@@ -26,7 +27,7 @@ class SpotifyPlaylist(Base):
         self.track_url = track_url
         self.user_index = user_index
 
-    def login(self):
+    def login_step(self):
         username_input = self.driver.find_element(By.ID, "login-username")
         username_input.send_keys(self.username)
 
@@ -38,27 +39,6 @@ class SpotifyPlaylist(Base):
 
         log_message(f"Connexion en cours : compte de {self.username} !")
 
-    def action(self):
-        self.login()
-        self.get_page(self.track_url)
-
-        keyboard.send("esc")
-
-        time.sleep(5)
-
-        self.choose_an_artist()  # Chose a favorite artist if Spotify asks
-
-        time.sleep(5)
-
-        if (
-            "/artist" in self.driver.current_url
-        ):  # If user was listening to them favorite artist
-            self.get_page(self.track_url)
-
-        self.show_track_info()
-        self.play(self.user_index)
-        self.monitor()
-
     def show_track_info(self):
         self.title = self.driver.find_element(
             By.XPATH, '//*[@data-testid="entityTitle"]/h1'
@@ -66,7 +46,7 @@ class SpotifyPlaylist(Base):
 
         log_message(f"🎶 Les bots écoutent la playlist : {self.title.text} 🎧")
 
-    def monitor(self):
+    def song_monitor(self):
         """Continuously monitor the last song's progress and play state."""
         playlist_songs = self.driver.find_element(
             By.XPATH,
@@ -107,3 +87,55 @@ class SpotifyPlaylist(Base):
 
             except NoSuchElementException:  # Last song is not playing
                 pass
+
+    def listen_to_random_artist(self):
+        search_bar = self.driver.find_element(
+            By.XPATH,
+            "//*[@data-testid='search-input']",
+        )
+
+        search_bar.send_keys(random.choice(settings.spotify_favorits_artists))
+
+        time.sleep(self.delay_page_loading)
+
+        first_artist = self.driver.find_element(
+            By.XPATH, "(//span[@role='presentation'])[1]"
+        )
+
+        self.submit(first_artist, 10)
+        self.play()
+
+    def choose_an_artist(self):
+        try:  # Check if Spotify displays a pop-up asking to choose favorite artists
+            self.driver.find_element(
+                By.XPATH,
+                '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
+            )
+
+        except NoSuchElementException:
+            return
+
+        self.listen_to_random_artist()
+
+    def listening_step(self):
+        self.get_page(self.track_url)
+        keyboard.send("esc")
+
+        time.sleep(5)
+
+        self.choose_an_artist()  # Chose a favorite artist if Spotify asks
+
+        time.sleep(5)
+
+        if (
+            "/artist" in self.driver.current_url
+        ):  # If user was listening to them favorite artist
+            self.get_page(self.track_url)
+
+        self.show_track_info()
+        self.play(self.user_index)
+        self.song_monitor()
+
+    def action(self):
+        self.login_step()
+        self.listening_step()
