@@ -115,13 +115,9 @@ class Base:
 
     def verify_page_url(self, step: str, keyword: int):
         if keyword not in self.driver.current_url:
-            raise UnexpectedUrl(
-                "❌ L'utilisateur n'est pas arrivé à la destination attendue !"
-            )
+            raise UnexpectedUrl(f"step: {step}, keyword: {keyword}")
 
-        log_message(
-            f"✅ L'utilisateur est à l'étape '{step}' 🎯"
-        )
+        log_message(f"✅ L'utilisateur est à l'étape '{step}' 🎯")
 
     @property
     def click_next(self):
@@ -182,7 +178,7 @@ class Base:
         run = self.run_preveting_errors(wrapper)
         run()
 
-    def logg_error(self, message: str):
+    def log_error(self, message: str):
         timestamp = (
             datetime.datetime.now()
             .strftime(settings.logging_datefmt)
@@ -203,9 +199,8 @@ class Base:
                     self.driver.quit()
                     break
 
-                except RetryAgainError as e:
+                except RetryAgainError:
                     self.retries += 1
-                    log_message(e)
                     if self.retries <= self.max_retries:
                         log_message(
                             f"🔄 ({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
@@ -213,16 +208,17 @@ class Base:
                         continue
 
                     log_message("Nombre maximal de tentatives atteint.")
-                    self.driver.quit()
-                    break
+
+                except UnexpectedUrl as e:
+                    pass
 
                 except NoSuchWindowException:
                     log_message("🚫 La fenêtre a été fermée.")
-                    self.driver.quit()
-                    break
 
                 except Exception as e:
-                    self.logg_error(f"Error pendant l'execution de l'application: {e}")
+                    self.log_error(f"Error pendant l'execution de l'application: {e}")
+
+                finally:
                     self.driver.quit()
                     break
 

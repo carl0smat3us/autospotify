@@ -5,8 +5,8 @@ import keyboard
 from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 import settings
 from utils.base import Base
@@ -97,18 +97,20 @@ class SpotifyPlaylist(Base):
                 pass
 
     def listen_to_random_artist(self):
-        search_bar = self.driver.find_element(
-            By.XPATH,
-            "//*[@data-testid='search-input']",
+        search_bar = WebDriverWait(self.driver, 180).until(
+            EC.visibility_of_element_located((By.XPATH, "//*[@data-testid='search-input']"))
         )
 
         random_artist = random.choice(settings.spotify_favorits_artists)
 
         search_bar.send_keys(random_artist)
 
-        time.sleep(self.delay_page_loading)
+        time.sleep(5)
 
-        # time.sleep(500)
+        if search_bar.get_attribute('value').strip() != random_artist.strip():
+            raise ValueError(f"❌ Erreur : la saisie ne correspond pas à {random_artist} ! 🔄🎵")
+
+        time.sleep(self.delay_page_loading)
 
         first_artist = self.driver.find_element(
             By.XPATH,
