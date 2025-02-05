@@ -5,6 +5,8 @@ import keyboard
 from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 import settings
 from utils.base import Base
@@ -27,7 +29,9 @@ class SpotifyPlaylist(Base):
         self.user_index = user_index
 
     def login_step(self):
-        username_input = self.driver.find_element(By.ID, "login-username")
+        username_input = WebDriverWait(self.driver, 180).until(
+            EC.visibility_of_element_located((By.ID, "login-username"))
+        )
         username_input.send_keys(self.username)
 
         password_input = self.driver.find_element(By.ID, "login-password")
