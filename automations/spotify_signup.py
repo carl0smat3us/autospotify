@@ -42,7 +42,7 @@ class SpotifySignup(Base):
         self.submit(self.click_next)
 
     def personal_details_step(self):
-        self.verify_page_url("taper le mot de passe", "step=2")
+        self.verify_page_url("taper les infos personelles", "step=2")
 
         # Fill Name
         name_input = self.driver.find_element(By.NAME, "displayName")
@@ -69,7 +69,7 @@ class SpotifySignup(Base):
         self.submit(self.click_next)
 
     def terms_step(self):
-        self.verify_page_url("taper le mot de passe", "step=3")
+        self.verify_page_url("les termes", "step=3")
 
         def check_terms_box():
             try:
