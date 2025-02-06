@@ -115,9 +115,11 @@ class Base:
 
     def verify_page_url(self, step: str, keyword: int):
         if keyword not in self.driver.current_url:
-            raise UnexpectedUrl(f"step: {step}, keyword: {keyword}")
+            raise UnexpectedUrl(
+                f"(username: {self.username}), (step: {step}), (keyword: {keyword})"
+            )
 
-        log_message(f"✅ L'utilisateur est à l'étape '{step}' 🎯")
+        log_message(f"✅ Le bot {self.username} est à l'étape '{step}' 🎯")
 
     @property
     def click_next(self):

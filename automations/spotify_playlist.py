@@ -41,6 +41,7 @@ class SpotifyPlaylist(Base):
         self.submit(login_button, self.delay_page_loading)
 
         self.verify_page_url("se connecter", "account/overview")
+
         log_message(
             f"✅ L'utilisateur s'est connecté avec succès : compte de {self.username} ! 🚀"
         )
@@ -86,7 +87,9 @@ class SpotifyPlaylist(Base):
                     )[0]
                 )
 
-                if percentage > 95:
+                if percentage >= 5:
+                    time.sleep(30)
+
                     log_message(
                         f"🎧 Le {self.user_index}° bot a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
                     )
@@ -98,7 +101,9 @@ class SpotifyPlaylist(Base):
 
     def listen_to_random_artist(self):
         search_bar = WebDriverWait(self.driver, 180).until(
-            EC.visibility_of_element_located((By.XPATH, "//*[@data-testid='search-input']"))
+            EC.visibility_of_element_located(
+                (By.XPATH, "//*[@data-testid='search-input']")
+            )
         )
 
         random_artist = random.choice(settings.spotify_favorits_artists)
@@ -107,8 +112,10 @@ class SpotifyPlaylist(Base):
 
         time.sleep(5)
 
-        if search_bar.get_attribute('value').strip() != random_artist.strip():
-            raise ValueError(f"❌ Erreur : la saisie ne correspond pas à {random_artist} ! 🔄🎵")
+        if search_bar.get_attribute("value").strip() != random_artist.strip():
+            raise ValueError(
+                f"❌ Erreur : la saisie ne correspond pas à {random_artist} ! 🔄🎵"
+            )
 
         time.sleep(self.delay_page_loading)
 
@@ -119,7 +126,7 @@ class SpotifyPlaylist(Base):
 
         self.submit(element=first_artist, delay=10, use_javascript=False)
 
-        self.verify_page_url("recherche d'un chanteur aléatoire", "artist")
+        self.verify_page_url("sélection d'un artiste préféré 🎨✨", "artist")
 
         self.play()
 
@@ -132,7 +139,9 @@ class SpotifyPlaylist(Base):
                 '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
             )
 
-            log_message("Spotify a demandé au bot de choisir son chanteur préféré 🤖🎤")
+            log_message(
+                "L'application a demandé au bot de choisir son chanteur préféré 🤖🎤"
+            )
         except NoSuchElementException:
             return
 
@@ -140,7 +149,10 @@ class SpotifyPlaylist(Base):
 
     def open_playlist(self):
         self.get_page(self.track_url)
-        keyboard.send("esc")
+
+        for _ in range(5):
+            keyboard.send("esc")
+            time.sleep(2)
         time.sleep(5)
 
     def listening_step(self):
