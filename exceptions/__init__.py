@@ -10,7 +10,7 @@ class RetryAgainError(Exception):
 class UnexpectedUrl(Exception):
     def __init__(self, message: str):
         message = (
-            "❌ L'utilisateur n'est pas arrivé à la destination attendue!, destination:",
+            "❌ Le  bot n'est pas arrivé à la destination attendue!:",
             message,
         )
         logger.error(message)
