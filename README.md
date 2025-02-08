@@ -1,25 +1,25 @@
-# Automatisation Spotify
+# Spotify Automation  
 
-Un bot conçu pour créer des comptes Spotify automatiquement et écouter des playlists complètes en toute simplicité.
+A bot designed to automatically create Spotify accounts and effortlessly play entire playlists.  
 
-# Démarrage
+# Getting Started  
 
-1. Créez un environnement et installez les dépendances
+1. Create an environment and install dependencies  
 ```bash
 python install.py
-```
+```  
 
-2. Activez l'environnement
-Sur Linux/MacOS :
+2. Activate the environment  
+On Linux/MacOS:  
 ```bash
 source .venv/bin/activate
-```
-Sur Windows :
+```  
+On Windows:  
 ```bash
 .\.venv\Scripts\activate
-```
+```  
 
-3. Exécutez l'automatisation
+3. Run the automation  
 ```bash
 python app.py
 ```
