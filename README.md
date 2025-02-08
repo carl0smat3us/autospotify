@@ -9,16 +9,15 @@ A bot designed to automatically create Spotify accounts and effortlessly play en
 python install.py
 ```  
 
-2. Activate the environment  
-On Linux/MacOS:  
-```bash
-source .venv/bin/activate
-```  
-On Windows:  
-```bash
-.\.venv\Scripts\activate
-```  
-
+2. Activate the environment <br /> <br />
+   On Linux/MacOS:
+   ```bash
+   source .venv/bin/activate
+   ```
+   On Windows:
+   ```bash
+   .\.venv\Scripts\activate
+   ```  
 3. Run the automation  
 ```bash
 python app.py
