@@ -218,6 +218,7 @@ class Base:
                     log_message("🚫 La fenêtre a été fermée.")
 
                 except Exception as e:
+                    print()
                     self.log_error(f"Error pendant l'execution de l'application: {e}")
 
                 finally:
