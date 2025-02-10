@@ -1,10 +1,6 @@
-import os
-import tempfile
-import zipfile
-
 import requests
 
-from utils.logs import logger
+from exceptions import BotIpError
 
 
 def transform_proxy(proxy: str, as_dict: bool = False):
@@ -47,55 +43,4 @@ def get_user_ip(proxy_url: str = None) -> str:
         response.raise_for_status()
         return response.json().get("ip", "Unknown IP")
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error fetching IP: {e}")
-        return "Unknown IP"
-
-
-def create_proxy_extension(proxy: str) -> str:
-    """
-    Creates a Chrome extension for proxy authentication using extracted proxy details.
-    """
-    proxy_data = transform_proxy(reverse_transform(proxy), as_dict=True)
-    manifest_json = """{
-        "version": "1.0.0",
-        "manifest_version": 2,
-        "name": "Proxy Auth Extension",
-        "permissions": ["proxy", "tabs", "unlimitedStorage", "storage", "<all_urls>", "webRequest", "webRequestBlocking"],
-        "background": {"scripts": ["background.js"]},
-        "minimum_chrome_version": "22.0.0"
-    }"""
-
-    background_js = f"""
-    var config = {{
-        mode: "fixed_servers",
-        rules: {{
-            singleProxy: {{
-                scheme: "http",
-                host: "{proxy_data['host']}",
-                port: parseInt({proxy_data['port']})
-            }},
-            bypassList: ["localhost"]
-        }}
-    }};
-
-    chrome.proxy.settings.set({{value: config, scope: "regular"}}, function() {{}});
-
-    chrome.webRequest.onAuthRequired.addListener(
-        function(details) {{
-            return {{
-                authCredentials: {{
-                    username: "{proxy_data['user']}",
-                    password: "{proxy_data['password']}"
-                }}
-            }};
-        }},
-        {{urls: ["<all_urls>"]}},
-        ["blocking"]
-    );
-    """
-    plugin_file_path = os.path.join(tempfile.gettempdir(), "proxy_auth_plugin.zip")
-
-    with zipfile.ZipFile(plugin_file_path, "w") as zp:
-        zp.writestr("manifest.json", manifest_json)
-        zp.writestr("background.js", background_js)
-    return plugin_file_path
+        raise BotIpError(f"Error fetching IP: {e}")

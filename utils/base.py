@@ -11,13 +11,15 @@ from selenium.common.exceptions import NoSuchWindowException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from selenium_proxy import add_proxy
+from selenium_proxy.schemas import Proxy
 from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
 from exceptions import RetryAgainError, UnexpectedUrl
 from utils.files import read_proxies_from_txt
 from utils.logs import log_message, logger
-from utils.proxies import create_proxy_extension, get_user_ip
+from utils.proxies import get_user_ip, transform_proxy
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
 
@@ -64,9 +66,9 @@ class Base:
 
         if len(self.proxies) >= 1:
             self.proxy_url = self.proxies[random.randint(0, len(self.proxies) - 1)]
-            proxy_extension = create_proxy_extension(self.proxy_url)
 
-            browser_options.add_extension(proxy_extension)
+            proxy_data = transform_proxy(self.proxy_url, as_dict=True)
+            add_proxy(browser_options, proxy=Proxy(**proxy_data))
 
         self.driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=browser_options

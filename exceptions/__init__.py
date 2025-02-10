@@ -7,6 +7,12 @@ class RetryAgainError(Exception):
         super().__init__(message)
 
 
+class BotIpError(Exception):
+    def __init__(self, message: str):
+        logger.error(message)
+        super().__init__(message)
+
+
 class UnexpectedUrl(Exception):
     def __init__(self, message: str):
         message = (
