@@ -42,10 +42,10 @@ def clear_terminal():
 
 
 def main():
+    clear_terminal()
+
     while True:
         try:
-            clear_terminal()
-
             print(logo)
 
             print(
@@ -87,8 +87,8 @@ def main():
                 print("\nDémarrage de la création de compte Spotify...")
 
                 users = read_users_from_json(
-                    settings.webmail_accounts_path,
-                    AccountFilter(mail_account_used="no"),
+                    path=settings.webmail_accounts_path,
+                    filters=AccountFilter(mail_account_used="no"),
                 )
 
                 # Verifica se há usuários disponíveis
@@ -111,8 +111,8 @@ def main():
                 print("\nDémarrage de la activation de compte Spotify...")
 
                 users = read_users_from_json(
-                    settings.spotify_accounts_path,
-                    AccountFilter(spotify_account_confirmed="no"),
+                    path=settings.spotify_accounts_path,
+                    filters=AccountFilter(spotify_account_confirmed="no"),
                 )
 
                 # Verifica se há usuários disponíveis
@@ -147,43 +147,48 @@ def main():
 
                 clean_terminal_timer()
 
-            elif action == "3":
+            elif action == "4":
                 print("\nDémarrage de l'interaction avec la playlist Spotify...")
-                track_url = input("Veuillez entrer l'URL de la playlist : ").strip()
+                users = read_users_from_json(path=settings.spotify_accounts_path)
 
-                users = read_users_from_json(settings.spotify_accounts_path)
+                if not users:
+                    print(
+                        "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
+                    )
+                else:
+                    track_url = input("Veuillez entrer l'URL de la playlist : ").strip()
 
-                compte_nombre = 0
+                    compte_nombre = 0
 
-                log(f"🌟 URL de la playlist choisie : {track_url} 🎵")
+                    log(f"🌟 URL de la playlist choisie : {track_url} 🎵")
 
-                sleep(3)
+                    sleep(3)
 
-                print("La lecture de la playlist va être faite infiniment ♾️\n")
+                    print("La lecture de la playlist va être faite infiniment ♾️\n")
 
-                if len(users) >= 1:
-                    while True:
-                        users_index = random.randint(0, len(users) - 1)
-                        user = users[users_index]
+                    if len(users) >= 1:
+                        while True:
+                            users_index = random.randint(0, len(users) - 1)
+                            user = users[users_index]
 
-                        log(
-                            f"Lecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
-                        )
+                            log(
+                                f"Lecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
+                            )
 
-                        spotify_playlist = SpotifyPlaylist(
-                            user=User(
-                                username=user.username,
-                                password=user.password,
-                            ),
-                            track_url=track_url,
-                            user_index=users_index + 1,
-                        )
-                        spotify_playlist.run()
-                        compte_nombre += 1
+                            spotify_playlist = SpotifyPlaylist(
+                                user=User(
+                                    username=user.username,
+                                    password=user.password,
+                                ),
+                                track_url=track_url,
+                                user_index=users_index + 1,
+                            )
+                            spotify_playlist.run()
+                            compte_nombre += 1
 
                 clean_terminal_timer()
 
-            elif action == "4":
+            elif action == "5":
                 break
             else:
                 print("\nChoix invalide.")

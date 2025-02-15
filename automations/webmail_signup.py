@@ -1,6 +1,5 @@
 import random
 import re
-from time import sleep
 
 from phone_gen import PhoneNumber
 from selenium.common.exceptions import NoSuchElementException
@@ -65,7 +64,7 @@ class MailSignUp(Base):
                 "Le domaine est indisponible 🌐 ou le service de messagerie est temporairement hors ligne 📧."
             )
 
-        self.user.username = (self.user.username + "@" + self.mail_domain,)
+        self.user.username = f"{self.user.username}@{self.mail_domain}"
 
     def personal_details_step(self):
         self.log_step("taper des informations personnelles")
@@ -125,8 +124,6 @@ class MailSignUp(Base):
     def recovery_step(self):
         self.log_step("taper des informations de recuperation du compte")
 
-        sleep(5)
-
         mobile_prefix = Select(
             self.driver.find_element(
                 By.CSS_SELECTOR, "[data-test='mobile-phone-prefix-input']"
@@ -140,7 +137,7 @@ class MailSignUp(Base):
         phone_input = self.driver.find_element(By.ID, "mobilePhone")
         self.fill_input(phone_input, phone_number.get_number(full=False))
 
-    def activate_account(self):
+    def activate_account_step(self):
         self.check_page_url(
             keyword="interception-lxa.mail.com", step_name="activation du compte mail"
         )
@@ -161,7 +158,7 @@ class MailSignUp(Base):
             ),
         )
 
-        self.activate_account()
+        self.activate_account_step()
 
         self.check_page_url(keyword="navigator-lxa.mail.com", step_name="accueil")
 

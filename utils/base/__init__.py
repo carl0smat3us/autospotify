@@ -10,14 +10,12 @@ from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException, NoSuchWindowException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_proxy import add_proxy
 from selenium_proxy.schemas import Proxy
 from twocaptcha_extension_python import TwoCaptcha
-from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
 from exceptions import RetryAgain, UnexpectedDestination
@@ -68,16 +66,14 @@ class Base(Form, Time):
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
 
-        chrome_service = ChromeDriverManager()
-
-        if "ublock" in extensions:
-            self.browser_options.add_argument(
-                Extension(
-                    chrome_version=chrome_service.driver.get_browser_version_from_os(),
-                    extension_id="cjpalhdlnbpafiamejdnhcphjbkeiagm",
-                    extension_name="ublock",
-                ).load()
-            )
+        # if "ublock" in extensions:
+        #     self.browser_options.add_argument(
+        #         Extension(
+        #             chrome_version=chrome_service.driver.get_browser_version_from_os(),
+        #             extension_id="cjpalhdlnbpafiamejdnhcphjbkeiagm",
+        #             extension_name="ublock",
+        #         ).load()
+        #     )
 
         if enable_captcha_solver:
             self.browser_options.add_argument(
@@ -97,7 +93,6 @@ class Base(Form, Time):
             self.browser_options.add_extension(extension)
 
         self.driver = webdriver.Chrome(
-            service=Service(chrome_service.install()),
             options=self.browser_options,
         )
 
@@ -168,7 +163,7 @@ class Base(Form, Time):
     def get_page(self, url: str, show_ip=False):
         if show_ip:
             self.ip = get_user_ip(self.proxy_url)
-            log(f"🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍 | {url}")
+            log(f"🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍")
 
         self.driver.get(url)
         self.verify_page()
@@ -198,12 +193,10 @@ class Base(Form, Time):
         self.accept_cookies()
         sleep(self.delay_start_interactions)
 
-    def check_page_url(self, keyword: str, step_name: str = None, delay=5):
+    def check_page_url(self, keyword: str, step_name: str = None):
         log(f'🔍 Vérification du mot-clé "{keyword}"')
 
-        sleep(
-            delay if delay != 0 else self.delay_page_loading
-        )  # Wait till the page full load
+        sleep(self.delay_start_interactions)
 
         if keyword not in self.driver.current_url:
             raise UnexpectedDestination(

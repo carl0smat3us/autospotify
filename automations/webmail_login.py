@@ -31,7 +31,7 @@ class MailLogin(Base):
         password_input = self.driver.find_element(By.ID, "login-password")
         self.fill_input(password_input, self.user.password)
 
-        self.click(
+        self.submit_form(
             query=FindElement(
                 by=By.XPATH,
                 value="//button[contains(@class, 'login-submit') and @type='submit']",

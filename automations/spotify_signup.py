@@ -80,7 +80,7 @@ class SpotifySignup(SpotifyBase):
 
         self.terms_step()
 
-        self.submit(self.click_next, 60)
+        self.click(query=self.button_next)
 
         self.check_page_url(keyword="download", step_name="accueil")
 
