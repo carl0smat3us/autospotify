@@ -1,86 +1,75 @@
 import random
 
-from faker import Faker
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 import settings
-from utils.base import Base
-from utils.files import save_user
+from utils.base.automation.spotify import SpotifyBase
+from utils.files import upsert_user
+from utils.schemas import FindElement, User
 
-faker = Faker()
 
-
-class SpotifySignup(Base):
-    def __init__(self):
-        username = f"""{faker.unique.first_name().lower()}{faker.unique.last_name().lower()}{
-                faker.unique.first_name().lower()}@{random.choice(settings.spotify_supported_domains)}"""
-
-        password = faker.password(
-            length=15,
-            special_chars=True,
-            digits=True,
-            upper_case=True,
-            lower_case=True,
-        )
-
-        super().__init__(username=username, password=password)
-        self.url = settings.spotify_signup_url
+class SpotifySignup(SpotifyBase):
+    def __init__(self, user: User):
+        super().__init__(user=user, base_url=settings.spotify_signup_url)
 
     def username_step(self):
         username_input = self.driver.find_element(By.ID, "username")
-        username_input.send_keys(self.username)
+        self.fill_input(username_input, self.user.username)
 
-        self.submit(self.click_next)
+        self.click(query=self.button_next)
 
     def password_step(self):
-        self.verify_page_url("taper le mot de passe", "step=1")
+        self.check_page_url(keyword="step=1", step_name="taper le mot de passe")
 
         password_input = self.driver.find_element(By.NAME, "new-password")
-        password_input.send_keys(self.password)
+        self.fill_input(password_input, self.user.password)
 
-        self.submit(self.click_next)
+        self.click(query=self.button_next)
 
     def personal_details_step(self):
-        self.verify_page_url("taper les infos personelles", "step=2")
+        self.check_page_url(keyword="step=2", step_name="taper les infos personelles")
 
         # Fill Name
         name_input = self.driver.find_element(By.NAME, "displayName")
-        name_input.send_keys(self.faker.name())
+        self.fill_input(name_input, self.faker.unique.first_name())
 
         # Fill Birthdate
         day_input = self.driver.find_element(By.NAME, "day")
-        day_input.send_keys(str(random.randint(1, 20)))
+        self.fill_input(day_input, str(random.randint(1, 20)))
 
         month_select = Select(self.driver.find_element(By.NAME, "month"))
-        month_select.select_by_index(random.randint(1, 12))
+        self.select_random_option(month_select)
 
         year_input = self.driver.find_element(By.NAME, "year")
-        year_input.send_keys(str(random.randint(1990, 2005)))
+        self.fill_input(year_input, str(random.randint(1990, 2005)))
 
         # Select Gender
         genders_list = ["gender_option_male", "gender_option_female"]
-
-        gender_option = self.driver.find_element(
-            By.CSS_SELECTOR, f"label[for='{random.choice(genders_list)}']"
+        self.click(
+            query=FindElement(
+                by=By.CSS_SELECTOR, value=f"label[for='{random.choice(genders_list)}']"
+            )
         )
-        gender_option.click()
 
-        self.submit(self.click_next)
+        self.click(query=self.button_next)
 
     def terms_step(self):
-        self.verify_page_url("les termes", "step=3")
+        self.check_page_url(keyword="step=3", step_name="les termes")
 
         def check_terms_box():
             try:
-                checkbox = self.driver.find_element(
-                    By.XPATH, '//label[@for="terms-conditions-checkbox"]/span[1]'
-                )
-                self.driver.execute_script("arguments[0].click();", checkbox)
+                self.click(
+                    query=FindElement(
+                        by=By.XPATH,
+                        value='//label[@for="terms-conditions-checkbox"]/span[1]',
+                    ),
+                    use_javascript=True,
+                )  # Check conditions and terms box
             except Exception:
                 pass
 
-        check_terms_box()  # Depends of user's country
+        check_terms_box()
 
     def action(self):
         self.username_step()
@@ -92,4 +81,17 @@ class SpotifySignup(Base):
         self.terms_step()
 
         self.submit(self.click_next, 60)
-        save_user(self.username, self.password)
+
+        self.check_page_url(keyword="download", step_name="accueil")
+
+        upsert_user(
+            user=User(**self.user, mail_account_used="yes"),
+            path=settings.webmail_accounts_path,
+            user_type="webmail",
+        )
+
+        upsert_user(
+            user=User(**self.user, spotify_account_confirmed="no"),
+            path=settings.spotify_accounts_path,
+            user_type="spotify",
+        )
