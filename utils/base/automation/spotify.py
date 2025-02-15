@@ -1,0 +1,43 @@
+from time import sleep
+from typing import List
+
+from selenium.webdriver.common.by import By
+
+from utils.base import Base
+from utils.logs import log
+from utils.schemas import FindElement, User
+
+
+class SpotifyBase(Base):
+    def __init__(
+        self,
+        user: User,
+        base_url: str,
+        extensions: List[str],
+        enable_captcha_solver=False,
+    ):
+        super().__init__(
+            user=user,
+            base_url=base_url,
+            extensions=extensions,
+            enable_captcha_solver=enable_captcha_solver,
+        )
+
+    def play(self, user_index=None):
+        self.click(
+            query=FindElement(
+                by=By.CSS_SELECTOR, value="button[data-testid='play-button']"
+            ),
+            use_javascript=True,
+        )  # Click on the button play
+
+        if user_index is not None:
+            log(f"🎧 Le {user_index}° bot est en train d'écouter la playlist. 🎶")
+
+        sleep(10)  # Waiting till the playlist changes
+
+    @property
+    def button_next(self):
+        find_element = FindElement(by=By.CSS_SELECTOR, value="[data-testid='submit']")
+
+        return find_element

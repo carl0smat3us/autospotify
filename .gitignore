@@ -187,5 +187,5 @@ logs/screenshots/*.png
 logs/screenshots/*.jpg
 logs/screenshots/*.jpegz
 
-# Guides
-instruction.txt
+# Extensions
+extensions/

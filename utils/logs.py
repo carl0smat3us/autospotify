@@ -13,15 +13,15 @@ class CustomFormatter(logging.Formatter):
 log_format = "%(asctime)s: %(message)s"
 log_file = path.join(settings.logs_paths["root"], settings.logs_file)
 
-middle_level = 35
+MIDDLE_LEVEL = 35
 
 # Root logger
 root_logger = logging.getLogger()
-root_logger.setLevel(middle_level)
+root_logger.setLevel(MIDDLE_LEVEL)
 
 # File handler
 file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
-file_handler.setLevel(middle_level)
+file_handler.setLevel(MIDDLE_LEVEL)
 file_handler.setFormatter(CustomFormatter(log_format, datefmt=settings.logging_datefmt))
 root_logger.addHandler(file_handler)
 
@@ -36,6 +36,6 @@ root_logger.addHandler(console_handler)
 logger = logging.getLogger("app_logger")
 
 
-def log_message(message: str):
-    print()
-    logger.log(middle_level, message)
+def log(message: str, level=MIDDLE_LEVEL):
+    print("\n")
+    logger.log(level, message)

@@ -1,6 +1,6 @@
 import requests
 
-from exceptions import BotIpError
+from exceptions import IpAddressError
 
 
 def transform_proxy(proxy: str, as_dict: bool = False):
@@ -43,4 +43,4 @@ def get_user_ip(proxy_url: str = None) -> str:
         response.raise_for_status()
         return response.json().get("ip", "Unknown IP")
     except requests.exceptions.RequestException as e:
-        raise BotIpError(f"Error fetching IP: {e}")
+        raise IpAddressError(f"Error fetching IP: {e}")

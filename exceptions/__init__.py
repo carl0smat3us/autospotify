@@ -1,23 +1,31 @@
-from utils.logs import logger
+from logging import ERROR
+
+from utils.logs import log
 
 
-class RetryAgainError(Exception):
+class RetryAgain(Exception):
     def __init__(self, message: str):
-        logger.error(message)
+        log(message, ERROR)
         super().__init__(message)
 
 
-class BotIpError(Exception):
+class IpAddressError(Exception):
     def __init__(self, message: str):
-        logger.error(message)
+        log(message, ERROR)
         super().__init__(message)
 
 
-class UnexpectedUrl(Exception):
+class CaptchaUnsolvable(Exception):
+    def __init__(self, message: str):
+        log(message, ERROR)
+        super().__init__(message)
+
+
+class UnexpectedDestination(Exception):
     def __init__(self, message: str):
         message = (
             "❌ Le  bot n'est pas arrivé à la destination attendue!:",
             message,
         )
-        logger.error(message)
+        log(message, ERROR)
         super().__init__(message)

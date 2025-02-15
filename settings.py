@@ -1,7 +1,9 @@
 from os import path
 
-accounts_file_path = "accounts.json"
-proxies_file_path = "proxies.txt"
+spotify_accounts_path = "spotify.accounts.json"
+webmail_accounts_path = "webmail.accounts.json"
+
+proxies_path = "proxies.txt"
 
 logs_paths = {"root": "logs", "screenshots": path.join("logs", "screenshots")}
 logs_file = "app.log"
@@ -9,6 +11,10 @@ logs_file = "app.log"
 logging_datefmt = "%Y-%m-%d %H:%M:%S"
 
 venv_dir = ".venv"
+
+webmail_signup_url = "https://signup.mail.com/"
+
+webmail_login_url = "https://www.mail.com/"
 
 spotify_login_url = "https://www.spotify.com/login"
 
@@ -30,15 +36,6 @@ spotify_supported_languages = [
     "sv-SE",
     "da-DK",
     "no-NO",
-]
-
-spotify_supported_domains = [
-    "proton.me",
-    "gmail.com",
-    "outlook.com",
-    "outlook.be",
-    "free.fr",
-    "icloud.com",
 ]
 
 spotify_favorits_artists = [
