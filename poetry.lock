@@ -894,18 +894,6 @@ urllib3 = {version = ">=1.26,<3", extras = ["socks"]}
 websocket-client = ">=1.8,<2.0"
 
 [[package]]
-name = "selenium-proxy-utils"
-version = "0.0.1"
-description = "A simple library to facilitate the use of proxies with Selenium and Python."
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "selenium_proxy_utils-0.0.1-py3-none-any.whl", hash = "sha256:a0483665601315318c9eca161472befd56b548df10c4aa090a3d063836a07113"},
-    {file = "selenium_proxy_utils-0.0.1.tar.gz", hash = "sha256:95199cc5a702f3b2919b4ca87f5df5bfcd908b62eeee12d4199482dcfe83c25a"},
-]
-
-[[package]]
 name = "sniffio"
 version = "1.3.1"
 description = "Sniff out which async library your code is running under"
@@ -1135,4 +1123,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "377af9cbc70e03465bdbe7214890f5f41dff5da0708e483db356e61807655ce6"
+content-hash = "1161777826bf928258e798f25e5b43f10253f892b7d8ea8e8b171ba76181d278"

@@ -8,24 +8,6 @@ from utils.proxies import transform_proxy
 from utils.schemas import AccountFilter, User
 
 
-def read_proxies_from_txt():
-    try:
-        with open(settings.proxies_path, "r") as file:
-            proxies_result = file.readlines()
-
-        proxies = [
-            transform_proxy(line.strip()) for line in proxies_result if line.strip()
-        ]
-
-        return proxies
-
-    except FileNotFoundError:
-        return []
-    except Exception as e:
-        log(f"Error reading TXT file: {e}", ERROR)
-        return []
-
-
 def read_users_from_json(path: str, filters: AccountFilter = {}) -> List[User]:
     try:
         final_users = []

@@ -13,17 +13,14 @@ from selenium.common.exceptions import NoAlertPresentException, NoSuchWindowExce
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium_proxy import add_proxy
-from selenium_proxy.schemas import Proxy
 from twocaptcha_extension_python import TwoCaptcha
 
 import settings
 from exceptions import RetryAgain, UnexpectedDestination
 from utils.base.form import Form
 from utils.base.time import Time
-from utils.files import read_proxies_from_txt
 from utils.logs import log
-from utils.proxies import get_user_ip, transform_proxy
+from utils.proxies import get_user_ip
 from utils.schemas import FindElement, User
 
 ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
@@ -43,7 +40,6 @@ class Base(Form, Time):
 
         self.user = user
 
-        self.proxies = read_proxies_from_txt()
         self.proxy_url = None
         self.user_agent = ua.random
         self.ip = get_user_ip()
@@ -66,28 +62,28 @@ class Base(Form, Time):
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
 
-        # if "ublock" in extensions:
-        #     self.browser_options.add_argument(
-        #         Extension(
-        #             chrome_version=chrome_service.driver.get_browser_version_from_os(),
-        #             extension_id="cjpalhdlnbpafiamejdnhcphjbkeiagm",
-        #             extension_name="ublock",
-        #         ).load()
-        #     )
+        if "ublock" in extensions:
+            self.browser_options.add_argument(
+                Extension(
+                    extension_id="cjpalhdlnbpafiamejdnhcphjbkeiagm",
+                    extension_name="ublock",
+                    chrome_version=self.browser_options.browser_version,
+                ).load()
+            )
 
         if enable_captcha_solver:
             self.browser_options.add_argument(
                 TwoCaptcha(api_key=getenv("TWO_CAPTCHA_API_KEY")).load()
             )
 
-        if len(self.proxies) == 0:
+        if not getenv("PROXY_SERVER"):
             log("🚨 Aucun proxy ! Utilisation de votre IP. 🌐🔍")
 
-        if len(self.proxies) >= 1:
-            self.proxy_url = self.proxies[random.randint(0, len(self.proxies) - 1)]
-
-            proxy_data = transform_proxy(self.proxy_url, as_dict=True)
-            add_proxy(self.browser_options, proxy=Proxy(**proxy_data))
+        if getenv("PROXY_SERVER"):
+            self.proxy_url = getenv("PROXY_SERVER")
+            self.browser_options.add_argument(
+                f'--proxy-server={getenv("PROXY_SERVER")}'
+            )
 
         for extension in extensions:
             self.browser_options.add_extension(extension)

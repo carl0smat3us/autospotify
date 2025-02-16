@@ -19,7 +19,6 @@ dependencies = [
     "chrome-extension-python (>=1.0.1,<2.0.0)",
     "fake-useragent (>=2.0.3,<3.0.0)",
     "faker (>=36.1.1,<37.0.0)",
-    "selenium-proxy-utils (>=0.0.1,<0.0.2)",
     "twocaptcha-extension-python (>=1.0.1,<2.0.0)",
     "scipy (>=1.15.1,<2.0.0)"
 ]
