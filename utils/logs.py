@@ -11,7 +11,7 @@ class CustomFormatter(logging.Formatter):
 
 
 log_format = "%(asctime)s: %(message)s"
-log_file = path.join(settings.logs_paths["root"], settings.logs_file)
+log_file = path.join(settings.logs_folder, settings.log_filename)
 
 MIDDLE_LEVEL = 35
 

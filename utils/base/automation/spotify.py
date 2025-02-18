@@ -1,5 +1,4 @@
 from time import sleep
-from typing import List
 
 from selenium.webdriver.common.by import By
 
@@ -13,7 +12,7 @@ class SpotifyBase(Base):
         self,
         user: User,
         base_url: str,
-        extensions: List[str],
+        extensions=[],
         enable_captcha_solver=False,
     ):
         super().__init__(

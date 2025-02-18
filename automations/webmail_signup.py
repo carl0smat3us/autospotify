@@ -1,7 +1,7 @@
 import random
-import re
+from time import sleep
 
-from phone_gen import PhoneNumber
+# import re
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -15,7 +15,9 @@ from utils.schemas import FindElement, User
 
 class MailSignUp(Base):
     def __init__(self):
-        super().__init__(user=None, base_url=settings.webmail_signup_url)
+        super().__init__(
+            user=None, base_url=settings.webmail_signup_url, enable_captcha_solver=True
+        )
 
         username = f"""{self.faker.unique.first_name().lower()}{self.faker.unique.last_name().lower()}{
                 self.faker.unique.first_name().lower()}"""
@@ -60,9 +62,7 @@ class MailSignUp(Base):
         except NoSuchElementException:
             pass
         else:
-            raise RetryAgain(
-                "Le domaine est indisponible 🌐 ou le service de messagerie est temporairement hors ligne 📧."
-            )
+            raise RetryAgain("Les domaines sont indisponibles 🌐 📧.")
 
         self.user.username = f"{self.user.username}@{self.mail_domain}"
 
@@ -100,7 +100,7 @@ class MailSignUp(Base):
         country_select = Select(
             self.driver.find_element(By.CSS_SELECTOR, "[data-test='country-input']")
         )
-        self.select_random_option(country_select)
+        country_select.select_by_value("FR")  # LA FRANCE
 
         # Fill Birthdate
         day_input = self.driver.find_element(By.ID, "bday-day")
@@ -121,27 +121,52 @@ class MailSignUp(Base):
         repeat_password_input = self.driver.find_element(By.ID, "confirm-password")
         self.fill_input(repeat_password_input, self.user.password)
 
+    def phone_number_step(self):
+        self.log_step("taper le numéro de téléphone")
+        # mobile_prefix = Select(
+        #     self.driver.find_element(
+        #         By.CSS_SELECTOR, "[data-test='mobile-phone-prefix-input']"
+        #     )
+        # )
+
+        # match = re.match(r"([A-Z]{2})", mobile_prefix.first_selected_option.text)
+        # iso_code = match.group(1)
+        phone_input = self.driver.find_element(By.ID, "mobilePhone")
+        phone_input.clear()
+        self.fill_input(phone_input, self.phone_number)
+
     def recovery_step(self):
         self.log_step("taper des informations de recuperation du compte")
-
-        mobile_prefix = Select(
-            self.driver.find_element(
-                By.CSS_SELECTOR, "[data-test='mobile-phone-prefix-input']"
-            )
-        )
-
-        match = re.match(r"([A-Z]{2})", mobile_prefix.first_selected_option.text)
-        iso_code = match.group(1)
-
-        phone_number = PhoneNumber(iso_code)
-        phone_input = self.driver.find_element(By.ID, "mobilePhone")
-        self.fill_input(phone_input, phone_number.get_number(full=False))
+        self.phone_number_step()
 
     def activate_account_step(self):
         self.check_page_url(
             keyword="interception-lxa.mail.com", step_name="activation du compte mail"
         )
-        self.submit_form(By.ID, "continueButton")
+        self.submit_form(query=FindElement(by=By.ID, value="continueButton"))
+
+    def create_account(self):
+        while True:
+            self.click(
+                query=FindElement(
+                    by=By.CSS_SELECTOR,
+                    value="[data-test='create-mailbox-create-button']",
+                ),
+            )
+
+            sleep(5)
+
+            try:  # Fix phone number bug
+                self.driver.find_element(
+                    By.CLASS_NAME,
+                    "mobile-phone-message",
+                )
+            except NoSuchElementException:
+                break
+            else:
+                print("found error")
+                self.phone_number_step()
+                continue
 
     def action(self):
         self.username_step()
@@ -152,18 +177,15 @@ class MailSignUp(Base):
 
         self.recovery_step()
 
-        self.submit_form(
-            query=FindElement(
-                by=By.CSS_SELECTOR, value="[data-test='create-mailbox-create-button']"
-            ),
-        )
+        self.handle_captcha(self.create_account)
 
         self.activate_account_step()
 
         self.check_page_url(keyword="navigator-lxa.mail.com", step_name="accueil")
 
         upsert_user(
-            user=User(**self.user, mail_account_used="no"),
-            path=settings.webmail_accounts_path,
-            user_type="webmail",
+            user=User(
+                username=self.user.username,
+                password=self.user.password,
+            ),
         )

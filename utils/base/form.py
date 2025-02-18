@@ -53,11 +53,13 @@ class Form(Time):
             raise Exception("Aucune option valide disponible à sélectionner.")
 
         random_choice = random.choice(valid_options)
+
         self.driver.execute_script("arguments[0].selected = true;", random_choice)
         select_element.click()
 
         sleep(self.delay_start_interactions)
-        return random_choice.get_attribute("value")
+
+        return select_element.get_attribute("value")
 
     def fill_input(self, element: WebElement, value: str):
         sleep(self.delay_start_interactions)

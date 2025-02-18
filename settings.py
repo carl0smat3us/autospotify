@@ -1,12 +1,16 @@
 from os import path
 
-spotify_accounts_path = "spotify.accounts.json"
-webmail_accounts_path = "webmail.accounts.json"
+app_folder = path.join(path.expanduser("~"), "Documents", "AutoSpotify")
 
-proxies_path = "proxies.txt"
+accounts_path = path.join(app_folder, "accounts.json")
 
-logs_paths = {"root": "logs", "screenshots": path.join("logs", "screenshots")}
-logs_file = "app.log"
+proxies_path = path.join(app_folder, "proxies.txt")
+
+logs_folder = path.join(app_folder, "logs")
+
+logs_screenshots_folder = path.join(logs_folder, "screenshots")
+
+log_filename = "app.log"
 
 logging_datefmt = "%Y-%m-%d %H:%M:%S"
 
