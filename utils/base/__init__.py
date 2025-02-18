@@ -5,22 +5,18 @@ from os import getenv, path
 from time import sleep
 
 import pytz
-from chrome_extension_python import Extension
 from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException, NoSuchWindowException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium_proxy import add_proxy
-from selenium_proxy.schemas import Proxy
+from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 from twocaptcha_extension_python import TwoCaptcha
-from webdriver_manager.chrome import ChromeDriverManager
 
 import settings
-from exceptions import RetryAgain, UnexpectedDestination
+from exceptions import RetryAgain
 from utils.base.form import Form
 from utils.base.time import Time
 from utils.files import read_proxies_from_txt
@@ -45,10 +41,12 @@ class Base(Form, Time):
 
         self.user = user
 
-        self.proxies = read_proxies_from_txt()
         self.proxy_url = None
         self.user_agent = ua.random
+        self.proxies = read_proxies_from_txt()
         self.ip = get_user_ip()
+
+        self.solved_captchas = 0
 
         self.browser_options = webdriver.ChromeOptions()
         self.browser_options.add_experimental_option(
@@ -68,16 +66,14 @@ class Base(Form, Time):
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
 
-        chrome_service = ChromeDriverManager()
-
-        if "ublock" in extensions:
-            self.browser_options.add_argument(
-                Extension(
-                    chrome_version=chrome_service.driver.get_browser_version_from_os(),
-                    extension_id="cjpalhdlnbpafiamejdnhcphjbkeiagm",
-                    extension_name="ublock",
-                ).load()
-            )
+        # if "ublock" in extensions:
+        #     self.browser_options.add_argument(
+        #         Extension(
+        #             extension_id="cjpalhdlnbpafiamejdnhcphjbkeiagm",
+        #             extension_name="ublock",
+        #             chrome_version=self.browser_options.browser_version,
+        #         ).load()
+        #     )
 
         if enable_captcha_solver:
             self.browser_options.add_argument(
@@ -90,14 +86,15 @@ class Base(Form, Time):
         if len(self.proxies) >= 1:
             self.proxy_url = self.proxies[random.randint(0, len(self.proxies) - 1)]
 
-            proxy_data = transform_proxy(self.proxy_url, as_dict=True)
-            add_proxy(self.browser_options, proxy=Proxy(**proxy_data))
+            proxy_data = transform_proxy(self.proxy_url)
+
+            proxy_helper = SeleniumAuthenticatedProxy(proxy_url=proxy_data)
+            proxy_helper.enrich_chrome_options(self.browser_options)
 
         for extension in extensions:
             self.browser_options.add_extension(extension)
 
         self.driver = webdriver.Chrome(
-            service=Service(chrome_service.install()),
             options=self.browser_options,
         )
 
@@ -122,6 +119,12 @@ class Base(Form, Time):
             "accuracy": 100,
         }
         self.driver.execute_cdp_cmd("Emulation.setGeolocationOverride", params)
+
+    @property
+    def phone_number(self):
+        prefix = random.choice(["06", "07"])
+        digits = "".join([str(random.randint(0, 9)) for _ in range(8)])
+        return f"{prefix} {digits[:2]} {digits[2:4]} {digits[4:6]} {digits[6:8]}"
 
     def activate_captcha_solver(self):
         handles = self.driver.window_handles
@@ -154,21 +157,40 @@ class Base(Form, Time):
         except Exception as e:
             log(f"Erreur lors de l'activation de l'extension: {str(e)}")
 
-        try:
-            self.click(
-                query=FindElement(by=By.ID, value="autoSolveRecaptchaV2"),
-                use_javascript=True,
-            )  # Enable automatic captcha solving
+        sleep(self.delay_start_interactions)
+        self.driver.switch_to.window(main_tab)
 
-            self.driver.switch_to.window(main_tab)
-            sleep(5)
-        except Exception as e:
-            log(f"❌ Erreur lors de l'activation de l'autoSolve: {str(e)}")
+    @property
+    def solve_captcha_button(self):
+        button = FindElement(
+            by=By.CSS_SELECTOR, value=".captcha-solver.captcha-solver_inner"
+        )
+
+        return button
+
+    def handle_captcha(self, callback):
+        self.click(query=self.solve_captcha_button, use_javascript=True)
+
+        while True:
+            captcha_status = self.driver.find_element(
+                by=self.solve_captcha_button.by, value=self.solve_captcha_button.value
+            )
+            state = captcha_status.get_attribute("data-state")
+
+            if state == "solving":
+                sleep(3)
+                continue
+            elif state == "solved":
+                self.solved_captchas += 1
+                callback()
+                break
+            else:
+                raise RetryAgain("❌ Captcha non résolu.")
 
     def get_page(self, url: str, show_ip=False):
         if show_ip:
             self.ip = get_user_ip(self.proxy_url)
-            log(f"🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍 | {url}")
+            log(f"🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍")
 
         self.driver.get(url)
         self.verify_page()
@@ -198,24 +220,18 @@ class Base(Form, Time):
         self.accept_cookies()
         sleep(self.delay_start_interactions)
 
-    def check_page_url(self, keyword: str, step_name: str = None, delay=5):
+    def check_page_url(self, keyword: str, step_name: str = None):
         log(f'🔍 Vérification du mot-clé "{keyword}"')
 
-        sleep(
-            delay if delay != 0 else self.delay_page_loading
-        )  # Wait till the page full load
+        sleep(self.delay_start_interactions)
 
         if keyword not in self.driver.current_url:
-            raise UnexpectedDestination(
-                f"(username: {self.user.username}), (step: {step_name}), (keyword: {keyword})"
-            )
+            raise RetryAgain(f"❌ Échec à l'étape {step_name} (mot-clé: {keyword})")
 
         if step_name:
             self.log_step(step_name)
 
     def run(self):
-        """Run the automation"""
-
         def wrapper():
             self.get_page(self.base_url, True)
             if self.enable_captcha_solver:
@@ -228,7 +244,7 @@ class Base(Form, Time):
     def log_step(self, step: str):
         log(f"✅ Le bot {self.user.username} est à l'étape '{step}' 🎯")
 
-    def screenshot_error(self, message: str):
+    def screenshot_error(self, message: str = None):
         timestamp = (
             datetime.datetime.now()
             .strftime(settings.logging_datefmt)
@@ -237,10 +253,11 @@ class Base(Form, Time):
         )
 
         screenshot_path = path.join(
-            settings.logs_paths["screenshots"], f"{timestamp}.png"
+            settings.logs_screenshots_folder, f"{timestamp}.png"
         )
 
-        log(message, ERROR)
+        if message:
+            log(message, ERROR)
         self.driver.save_screenshot(screenshot_path)
 
     def submit_form(self, query: FindElement, use_javascript=False):
@@ -251,14 +268,17 @@ class Base(Form, Time):
         try:
             sleep(self.delay_start_interactions)
 
-            if "mail.com" in self.driver.current_url:
-                WebDriverWait(self.driver, 180).until(
+            if (
+                "mail.com" in self.driver.current_url
+                or "navigator-lxa.mail.com" in self.driver.current_url
+            ):
+                WebDriverWait(self.driver, 15).until(
                     EC.frame_to_be_available_and_switch_to_it(
                         (By.CSS_SELECTOR, "iframe[src*='dl.mail.com']")
                     )
                 )
 
-                WebDriverWait(self.driver, 180).until(
+                WebDriverWait(self.driver, 15).until(
                     EC.frame_to_be_available_and_switch_to_it(
                         (By.CSS_SELECTOR, "iframe[src*='plus.mail.com']")
                     )
@@ -266,7 +286,6 @@ class Base(Form, Time):
 
             self.click(query=FindElement(by=By.ID, value="onetrust-accept-btn-handler"))
             sleep(self.delay_start_interactions)
-
             self.driver.switch_to.default_content()
         except:
             pass
@@ -283,15 +302,14 @@ class Base(Form, Time):
                 except RetryAgain:
                     self.retries += 1
                     if self.retries <= self.max_retries:
+                        self.screenshot_error()
                         log(
                             f"🔄 ({self.retries}) Nouvelle tentative en cours... Veuillez patienter."
                         )
+                        self.driver.refresh()
                         continue
 
                     log("Nombre maximal de tentatives atteint.", ERROR)
-                    break
-
-                except UnexpectedDestination as e:
                     break
 
                 except NoSuchWindowException:

@@ -1,4 +1,21 @@
 import os
+
+import settings
+
+
+def create_config_folder():
+    if not os.path.exists(settings.app_folder):  # Create root folder
+        os.mkdir(settings.app_folder)
+
+    if not os.path.exists(settings.logs_folder):
+        os.mkdir(settings.logs_folder)
+
+    if not os.path.exists(settings.logs_screenshots_folder):
+        os.mkdir(settings.logs_screenshots_folder)
+
+
+create_config_folder()
+
 import random
 from logging import ERROR
 from time import sleep
@@ -6,7 +23,6 @@ from time import sleep
 from art import text2art
 from dotenv import load_dotenv
 
-import settings
 from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
 from automations.webmail_login import MailLogin
@@ -42,10 +58,10 @@ def clear_terminal():
 
 
 def main():
+    clear_terminal()
+
     while True:
         try:
-            clear_terminal()
-
             print(logo)
 
             print(
@@ -87,32 +103,7 @@ def main():
                 print("\nDémarrage de la création de compte Spotify...")
 
                 users = read_users_from_json(
-                    settings.webmail_accounts_path,
-                    AccountFilter(mail_account_used="no"),
-                )
-
-                # Verifica se há usuários disponíveis
-                if not users:
-                    print(
-                        "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
-                    )
-                else:
-                    for i in range(users):
-                        log(f"Activation du compte {i + 1} sur {len(users)}...")
-
-                        user = users[i]
-
-                        mail_login = MailLogin(user)
-                        mail_login.run()
-
-                clean_terminal_timer()
-
-            elif action == "3":
-                print("\nDémarrage de la activation de compte Spotify...")
-
-                users = read_users_from_json(
-                    settings.spotify_accounts_path,
-                    AccountFilter(spotify_account_confirmed="no"),
+                    filters=AccountFilter(spotify_account_created="no"),
                 )
 
                 # Verifica se há usuários disponíveis
@@ -148,42 +139,72 @@ def main():
                 clean_terminal_timer()
 
             elif action == "3":
-                print("\nDémarrage de l'interaction avec la playlist Spotify...")
-                track_url = input("Veuillez entrer l'URL de la playlist : ").strip()
+                print("\nDémarrage de la activation de compte Spotify...")
 
-                users = read_users_from_json(settings.spotify_accounts_path)
+                users = read_users_from_json(
+                    filters=AccountFilter(spotify_account_activated="no"),
+                )
 
-                compte_nombre = 0
+                # Verifica se há usuários disponíveis
+                if not users:
+                    print(
+                        "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
+                    )
+                else:
+                    for i in range(len(users)):
+                        log(f"Activation du compte {i + 1} sur {len(users)}...")
 
-                log(f"🌟 URL de la playlist choisie : {track_url} 🎵")
+                        user = users[i]
 
-                sleep(3)
-
-                print("La lecture de la playlist va être faite infiniment ♾️\n")
-
-                if len(users) >= 1:
-                    while True:
-                        users_index = random.randint(0, len(users) - 1)
-                        user = users[users_index]
-
-                        log(
-                            f"Lecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
-                        )
-
-                        spotify_playlist = SpotifyPlaylist(
-                            user=User(
-                                username=user.username,
-                                password=user.password,
-                            ),
-                            track_url=track_url,
-                            user_index=users_index + 1,
-                        )
-                        spotify_playlist.run()
-                        compte_nombre += 1
+                        mail_login = MailLogin(user)
+                        mail_login.run()
 
                 clean_terminal_timer()
 
             elif action == "4":
+                print("\nDémarrage de l'interaction avec la playlist Spotify...")
+                users = read_users_from_json(
+                    filters=AccountFilter(spotify_account_created="yes"),
+                )
+
+                if not users:
+                    print(
+                        "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
+                    )
+                else:
+                    track_url = input("Veuillez entrer l'URL de la playlist : ").strip()
+
+                    compte_nombre = 0
+
+                    log(f"🌟 URL de la playlist choisie : {track_url} 🎵")
+
+                    sleep(3)
+
+                    print("La lecture de la playlist va être faite infiniment ♾️\n")
+
+                    if len(users) >= 1:
+                        while True:
+                            users_index = random.randint(0, len(users) - 1)
+                            user = users[users_index]
+
+                            log(
+                                f"Lecture de la playlist pour la {compte_nombre + 1}ᵉ fois."
+                            )
+
+                            spotify_playlist = SpotifyPlaylist(
+                                user=User(
+                                    username=user.username,
+                                    password=user.password,
+                                ),
+                                track_url=track_url,
+                                user_index=users_index + 1,
+                            )
+                            spotify_playlist.run()
+                            compte_nombre += 1
+
+                clean_terminal_timer()
+
+            elif action == "5":
                 break
             else:
                 print("\nChoix invalide.")

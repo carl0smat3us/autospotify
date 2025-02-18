@@ -80,18 +80,14 @@ class SpotifySignup(SpotifyBase):
 
         self.terms_step()
 
-        self.submit(self.click_next, 60)
+        self.click(query=self.button_next)
 
         self.check_page_url(keyword="download", step_name="accueil")
 
         upsert_user(
-            user=User(**self.user, mail_account_used="yes"),
-            path=settings.webmail_accounts_path,
-            user_type="webmail",
-        )
-
-        upsert_user(
-            user=User(**self.user, spotify_account_confirmed="no"),
-            path=settings.spotify_accounts_path,
-            user_type="spotify",
+            user=User(
+                username=self.user.username,
+                password=self.user.password,
+                spotify_account_created="yes",
+            ),
         )

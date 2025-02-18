@@ -6,14 +6,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 import settings
 from exceptions import RetryAgain
 from utils.base import Base
+from utils.logs import log
 from utils.schemas import FindElement, User
 
 
 class MailLogin(Base):
     def __init__(self, user: User):
-        super().__init__(
-            user=user, extensions=["ublock"], base_url=settings.webmail_login_url
-        )
+        super().__init__(user=user, base_url=settings.webmail_login_url)
+
+        self.activated = False
 
     def login_step(self):
         self.log_step("taper les informations de login")
@@ -31,7 +32,7 @@ class MailLogin(Base):
         password_input = self.driver.find_element(By.ID, "login-password")
         self.fill_input(password_input, self.user.password)
 
-        self.click(
+        self.submit_form(
             query=FindElement(
                 by=By.XPATH,
                 value="//button[contains(@class, 'login-submit') and @type='submit']",
@@ -65,12 +66,17 @@ class MailLogin(Base):
                 }
             )
 
-            # if "" in subject_element.text:
-            #   mail.click()
-            #   break
+            if "Confirmer" in subject_element.text:  # Search for the activation mail
+                self.click(mail)
+                self.activate_account_step()
+                break
 
-        print(messages)
+    def activate_account_step(self):
+        self.activated = True
 
     def action(self):
         self.login_step()
         self.get_mail_list_step()
+
+        if not self.activated:
+            log("⚠️ Le compte n'a pas été activé !")

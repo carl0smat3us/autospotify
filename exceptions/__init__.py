@@ -19,13 +19,3 @@ class CaptchaUnsolvable(Exception):
     def __init__(self, message: str):
         log(message, ERROR)
         super().__init__(message)
-
-
-class UnexpectedDestination(Exception):
-    def __init__(self, message: str):
-        message = (
-            "❌ Le  bot n'est pas arrivé à la destination attendue!:",
-            message,
-        )
-        log(message, ERROR)
-        super().__init__(message)

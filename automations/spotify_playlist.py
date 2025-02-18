@@ -1,9 +1,10 @@
 import random
 from time import sleep
 
-import keyboard
+from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -33,8 +34,7 @@ class SpotifyPlaylist(SpotifyBase):
         password_input = self.driver.find_element(By.ID, "login-password")
         self.fill_input(password_input, self.user.password)
 
-        login_button = self.driver.find_element(By.ID, "login-button")
-        self.submit(login_button, self.delay_page_loading)
+        self.click(query=FindElement(by=By.ID, value="login-button"))
 
         self.check_page_url(keyword="account/overview", step_name="se connecter")
 
@@ -143,7 +143,7 @@ class SpotifyPlaylist(SpotifyBase):
         self.get_page(self.track_url)
 
         for _ in range(5):  # Ensure that the App Link Prompt is being closed
-            keyboard.send("esc")
+            webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             sleep(2)
 
         sleep(5)

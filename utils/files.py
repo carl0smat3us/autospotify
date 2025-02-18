@@ -1,15 +1,15 @@
 import json
 from logging import ERROR
-from typing import List, Literal
+from typing import List
 
 import settings
+from settings import accounts_path
 from utils.logs import log
 from utils.proxies import transform_proxy
 from utils.schemas import AccountFilter, User
 
 
 def read_proxies_from_txt():
-    """Read proxies from a TXT file and return them as a list."""
     try:
         with open(settings.proxies_path, "r") as file:
             proxies_result = file.readlines()
@@ -23,15 +23,16 @@ def read_proxies_from_txt():
     except FileNotFoundError:
         return []
     except Exception as e:
-        log(f"Error reading TXT file: {e}", ERROR)
+        print(f"Error reading TXT file: {e}")
         return []
 
 
-def read_users_from_json(path: str, filters: AccountFilter) -> List[User]:
-    """Read users from the JSON file."""
+def read_users_from_json(filters: AccountFilter = {}) -> List[User]:
     try:
         final_users = []
-        users = json.load(path)
+
+        with open(accounts_path, "r", encoding="utf-8") as file:
+            users = json.load(file)
 
         if filters and isinstance(filters, dict):
             for user in users:
@@ -44,61 +45,21 @@ def read_users_from_json(path: str, filters: AccountFilter) -> List[User]:
     except FileNotFoundError:
         return []
     except json.JSONDecodeError:
-        log(f"Error: The file '{path}' is not a valid JSON.", ERROR)
+        log(f"Error: The file '{accounts_path}' is not a valid JSON.", ERROR)
         raise
     except Exception as e:
         log(f"Error reading JSON file: {e}", ERROR)
         raise
 
 
-def write_users_to_json(users: list, path: str):
-    """Write the updated users list back to the JSON file."""
+def write_users_to_json(users: List[User]):
+    with open(accounts_path, "w") as file:
+        json.dump([user.model_dump() for user in users], file, indent=4)
+
+
+def upsert_user(user: User):
     try:
-        with open(path, "w") as file:
-            json.dump(users, file, indent=4)
-    except Exception as e:
-        log(f"Error writing to JSON file: {e}", ERROR)
-        raise
-
-
-import json
-from typing import List, Literal
-
-
-class User:
-    def __init__(self, username: str, email: str):
-        self.username = username
-        self.email = email  # Add more fields as needed
-
-    def to_dict(self):
-        return {"username": self.username, "email": self.email}
-
-    @classmethod
-    def from_dict(cls, data):
-        return cls(**data)
-
-
-def read_users_from_json(path: str) -> List[User]:
-    try:
-        with open(path, "r") as file:
-            data = json.load(file)
-            return [User.from_dict(user) for user in data]
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-
-def write_users_to_json(users: List[User], path: str):
-    with open(path, "w") as file:
-        json.dump([user.to_dict() for user in users], file, indent=4)
-
-
-def upsert_user(user: User, path: str, user_type: Literal["spotify", "webmail"]):
-    """
-    Insert a new user into the JSON file.
-    If the user already exists, update their information.
-    """
-    try:
-        users = read_users_from_json(path)
+        users = read_users_from_json(accounts_path)
         user_found = False
 
         for i, existing_user in enumerate(users):
@@ -110,10 +71,10 @@ def upsert_user(user: User, path: str, user_type: Literal["spotify", "webmail"])
         if not user_found:
             users.append(user)
 
-        write_users_to_json(users, path)
-        action = "mis à jour" if user_found else "généré"
-        log(f"Le compte {user.username} {user_type} a été {action}.")
+        write_users_to_json(users)
+        action = "mis à jour 🔄" if user_found else "généré ✅"
+        log(f"Le compte {user.username} a été {action}.")
 
     except Exception as e:
         log(f"Error inserting/updating user: {e}", ERROR)
-        raise e
+        raise
