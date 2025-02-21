@@ -33,6 +33,9 @@ from autospotify.utils.files import (read_user_from_json, read_users_from_json,
                                      upsert_user)
 from autospotify.utils.logs import log
 from autospotify.utils.schemas import AccountFilter, User
+from faker import Faker
+
+faker = Faker()
 
 logo = text2art("SPOTIFY")
 load_dotenv()
@@ -59,8 +62,17 @@ def add_webmail_accounts():
         username = input("📧 Entrez l'email : ").strip()
         password = input("🔑 Entrez le mot de passe : ").strip()
 
-        if not username or not password:
+        if not username:
             break
+
+        if not password:
+            password = faker.password(
+                length=15,
+                special_chars=True,
+                digits=True,
+                upper_case=True,
+                lower_case=True,
+            )
 
         action = input("\n✅ Voulez-vous confirmer l'ajout du compte ? (O/N) : ")
 
@@ -103,11 +115,10 @@ def main():
             print(
                 """
             \nQue voulez-vous faire ?
-            \n1 - Ajouter des comptes Webmail
+            \n1 - Ajouter des emails
             \n2 - Créer des comptes Spotify
-            \n3 - Activer des comptes Spotify
-            \n4 - Écouter une playlist Spotify
-            \n5 - Sortir de l'application
+            \n3 - Écouter une playlist Spotify
+            \n4 - Sortir de l'application
             """
             )
 
@@ -175,28 +186,6 @@ def main():
                 clean_terminal_timer()
 
             elif action == "3":
-                print("\nDémarrage de la activation de compte Spotify...")
-
-                users = read_users_from_json(
-                    filters=AccountFilter(spotify_account_activated="no"),
-                )
-
-                if not users:
-                    print(
-                        "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
-                    )
-                else:
-                    for i in range(len(users)):
-                        log(f"Activation du compte {i + 1} sur {len(users)}...")
-
-                        user = users[i]
-
-                        mail_login = MailLogin(user)
-                        mail_login.run()
-
-                clean_terminal_timer()
-
-            elif action == "4":
                 print("\nDémarrage de l'interaction avec la playlist Spotify...")
                 users = read_users_from_json(
                     filters=AccountFilter(spotify_account_created="yes"),
@@ -236,7 +225,7 @@ def main():
 
                 clean_terminal_timer()
 
-            elif action == "5":
+            elif action == "4":
                 break
             else:
                 print("\nChoix invalide.")
