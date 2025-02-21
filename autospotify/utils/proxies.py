@@ -1,6 +1,6 @@
 import requests
 
-from exceptions import IpAddressError
+from autospotify.exceptions import IpAddressError
 
 
 def transform_proxy(proxy: str, as_dict: bool = False):

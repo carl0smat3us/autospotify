@@ -2,9 +2,9 @@ from time import sleep
 
 from selenium.webdriver.common.by import By
 
-from utils.base import Base
-from utils.logs import log
-from utils.schemas import FindElement, User
+from autospotify.utils.base import Base
+from autospotify.utils.logs import log
+from autospotify.utils.schemas import FindElement, User
 
 
 class SpotifyBase(Base):
@@ -20,7 +20,6 @@ class SpotifyBase(Base):
             base_url=base_url,
             extensions=extensions,
             enable_captcha_solver=enable_captcha_solver,
-            enable_undetected_chromedriver=True,
         )
 
     def play(self, user_index=None):

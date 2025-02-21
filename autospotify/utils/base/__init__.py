@@ -1,44 +1,46 @@
 import datetime
 import random
 from logging import ERROR
-from os import getenv, path
+from os import path
 from time import sleep
 from typing import List
 
-import undetected_chromedriver as uc
 from chrome_extension import Extension
-from fake_useragent import UserAgent
 from faker import Faker
 from selenium import webdriver
-from selenium.common.exceptions import (
-    ElementNotInteractableException,
-    InvalidSessionIdException,
-    NoAlertPresentException,
-    NoSuchWindowException,
-)
+from selenium.common.exceptions import (ElementNotInteractableException,
+                                        InvalidSessionIdException,
+                                        NoAlertPresentException,
+                                        NoSuchWindowException)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 from tabulate import tabulate
-from twocaptcha_extension_python import TwoCaptcha
 
-import settings
-from exceptions import CaptchaUnsolvable, IpAddressError, RetryAgain
-from utils.base.form import Form
-from utils.base.time import Time
-from utils.browser import get_chrome_version
-from utils.files import read_proxies_from_txt, read_users_from_json
-from utils.logs import log
-from utils.proxies import get_user_ip
-from utils.schemas import FindElement, MailBox, User
+import autospotify.settings as settings
+from autospotify.exceptions import (CaptchaUnsolvable, IpAddressError,
+                                    RetryAgain)
+from autospotify.utils.base.form import Form
+from autospotify.utils.base.time import Time
+from autospotify.utils.browser import get_chrome_version
+from autospotify.utils.files import read_proxies_from_txt, read_users_from_json
+from autospotify.utils.logs import log
+from autospotify.utils.proxies import get_user_ip
+from autospotify.utils.schemas import FindElement, MailBox, User
 
-ua = UserAgent(os=["Windows", "Linux", "Ubuntu"])
-
-
-class SafeChrome(uc.Chrome):
-    def __del__(self):
-        pass
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Thunderbird/91.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chromium/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
+    "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
+]
 
 
 class Base(Form, Time):
@@ -48,7 +50,6 @@ class Base(Form, Time):
         base_url: str,
         extensions: List[str] = [],
         enable_captcha_solver=False,
-        enable_undetected_chromedriver=False,
     ):
         self.faker = Faker()
 
@@ -61,7 +62,7 @@ class Base(Form, Time):
         self.user = user
 
         self.two_captcha_activated = False
-        self.user_agent = ua.random
+        self.user_agent = random.choice(user_agents)
         self.proxies = read_proxies_from_txt()
         self.ip = get_user_ip()
 
@@ -79,9 +80,7 @@ class Base(Form, Time):
         self.browser_options.add_argument("--disable-cookies")
 
         if enable_captcha_solver:
-            self.browser_options.add_argument(
-                TwoCaptcha(api_key=getenv("TWO_CAPTCHA_API_KEY")).load()
-            )
+            ...
 
         if len(self.proxies) == 0:
             log("🚨 Aucun proxy ! Utilisation de votre IP. 🌐🔍")
@@ -103,17 +102,13 @@ class Base(Form, Time):
                 Extension(
                     extension_link=extension,
                     chrome_version=get_chrome_version(),
+                    download_dir=path.join(settings.app_folder, "extensions"),
                 ).load()
             )
 
-        if enable_undetected_chromedriver:
-            self.driver = SafeChrome(
-                options=self.browser_options,
-            )
-        else:
-            self.driver = webdriver.Chrome(
-                options=self.browser_options,
-            )
+        self.driver = webdriver.Chrome(
+            options=self.browser_options,
+        )
 
         self.driver.maximize_window()
 

@@ -1,12 +1,12 @@
 [project]
-name = "spotify-automation"
+name = "autospotify"
 version = "0.1.0"
 description = "a spotify automation"
 authors = [
     {name = "Carlos Mateus",email = "carlosmatateumateus@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.10,<3.14"
 license = { file = "LICENSE" }
 dependencies = [
     "selenium (>=4.28.1,<5.0.0)",
@@ -17,37 +17,24 @@ dependencies = [
     "phone-gen (>=3.0.12,<4.0.0)",
     "requests (>=2.32.3,<3.0.0)",
     "pytz (>=2025.1,<2026.0)",
-    "fake-useragent (>=2.0.3,<3.0.0)",
     "faker (>=36.1.1,<37.0.0)",
-    "twocaptcha-extension-python (>=1.0.1,<2.0.0)",
     "scipy (>=1.15.1,<2.0.0)",
-    "chrome-extension-python (>=1.0.1,<2.0.0)",
-    "chrome-extension (>=0.0.1,<0.0.2)",
-    "undetected-chromedriver (>=3.5.5,<4.0.0)",
     "setuptools (>=75.8.0,<76.0.0)",
     "tabulate (>=0.9.0,<0.10.0)",
+    "selenium-authenticated-proxy (>=1.1.2,<2.0.0)",
+    "chrome-extension (>=1.0.1,<2.0.0)",
 ]
 
-[tool.briefcase]
-project_name = "spotify_automation"
-bundle = "com.spotify_automation"
-
-[tool.briefcase.app.spotify_automation]
-forma_name = "Auto Spotify"
-description = "a spotify automation"
-long_description = "a spotify automation"
-sources = ["app.py", "utils", "automations", "exceptions"]
-
-
 [tool.taskipy.tasks]
-lint = "python lint.py"
-run = "python app.py"
+lint = "black autospotify/ && isort autospotify/"
+run = "python -m autospotify"
+build = "poetry run pyinstaller autospotify/__main__.py --onefile --name autospotify --collect-submodules autospotify"
 
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
 isort = "^6.0.0"
-briefcase = "^0.3.22"
+pyinstaller = "^6.12.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -8,10 +8,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-import settings
-from utils.base.automation.spotify import SpotifyBase
-from utils.logs import log
-from utils.schemas import FindElement, User
+import autospotify.settings as settings
+from autospotify.utils.base.automation.spotify import SpotifyBase
+from autospotify.utils.logs import log
+from autospotify.utils.schemas import FindElement, User
 
 
 class SpotifyPlaylist(SpotifyBase):

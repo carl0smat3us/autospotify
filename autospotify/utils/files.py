@@ -2,11 +2,11 @@ import json
 from logging import ERROR
 from typing import List
 
-import settings
-from settings import accounts_path
-from utils.logs import log
-from utils.proxies import transform_proxy
-from utils.schemas import AccountFilter, User
+import autospotify.settings as settings
+from autospotify.settings import accounts_path
+from autospotify.utils.logs import log
+from autospotify.utils.proxies import transform_proxy
+from autospotify.utils.schemas import AccountFilter, User
 
 
 def read_proxies_from_txt():

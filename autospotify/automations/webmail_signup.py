@@ -7,10 +7,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
-import settings
-from exceptions import IpAddressError, RetryAgain
-from utils.base import Base
-from utils.schemas import FindElement, User
+import autospotify.settings as settings
+from autospotify.exceptions import IpAddressError, RetryAgain
+from autospotify.utils.base import Base
+from autospotify.utils.schemas import FindElement, User
 
 
 class MailSignUp(Base):

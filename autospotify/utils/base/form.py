@@ -6,9 +6,9 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 
-from utils.base.time import Time
-from utils.base.typer import Typer
-from utils.schemas import FindElement
+from autospotify.utils.base.time import Time
+from autospotify.utils.base.typer import Typer
+from autospotify.utils.schemas import FindElement
 
 
 class Form(Time):

@@ -3,10 +3,10 @@ import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
-import settings
-from utils.base.automation.spotify import SpotifyBase
-from utils.files import upsert_user
-from utils.schemas import FindElement, User
+import autospotify.settings as settings
+from autospotify.utils.base.automation.spotify import SpotifyBase
+from autospotify.utils.files import upsert_user
+from autospotify.utils.schemas import FindElement, User
 
 
 class SpotifySignup(SpotifyBase):

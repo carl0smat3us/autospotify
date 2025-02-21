@@ -2,7 +2,7 @@ import os
 
 from selenium.common.exceptions import InvalidSessionIdException
 
-import settings
+import autospotify.settings as settings
 
 
 def create_config_folder():
@@ -25,14 +25,14 @@ from time import sleep
 from art import text2art
 from dotenv import load_dotenv
 
-from automations.spotify_playlist import SpotifyPlaylist
-from automations.spotify_signup import SpotifySignup
-
-# from automations.webmail_signup import MailSignUp
-from automations.webmail_login import MailLogin
-from utils.files import read_user_from_json, read_users_from_json, upsert_user
-from utils.logs import log
-from utils.schemas import AccountFilter, User
+from autospotify.automations.spotify_playlist import SpotifyPlaylist
+from autospotify.automations.spotify_signup import SpotifySignup
+# from autospotify.automations.webmail_signup import MailSignUp
+from autospotify.automations.webmail_login import MailLogin
+from autospotify.utils.files import (read_user_from_json, read_users_from_json,
+                                     upsert_user)
+from autospotify.utils.logs import log
+from autospotify.utils.schemas import AccountFilter, User
 
 logo = text2art("SPOTIFY")
 load_dotenv()
@@ -56,8 +56,11 @@ def clean_terminal_timer():
 def add_webmail_accounts():
     while True:
         print()
-        username = input("📧 Entrez l'email : ")
-        password = input("🔑 Entrez le mot de passe : ")
+        username = input("📧 Entrez l'email : ").strip()
+        password = input("🔑 Entrez le mot de passe : ").strip()
+
+        if not username or not password:
+            break
 
         action = input("\n✅ Voulez-vous confirmer l'ajout du compte ? (O/N) : ")
 

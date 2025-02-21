@@ -8,11 +8,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-import settings
-from exceptions import RetryAgain
-from utils.base import Base
-from utils.logs import log
-from utils.schemas import FindElement, User
+import autospotify.settings as settings
+from autospotify.exceptions import RetryAgain
+from autospotify.utils.base import Base
+from autospotify.utils.logs import log
+from autospotify.utils.schemas import FindElement, User
 
 
 class MailLogin(Base):
@@ -23,7 +23,6 @@ class MailLogin(Base):
             extensions=[
                 "https://chromewebstore.google.com/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm"
             ],
-            enable_undetected_chromedriver=True,
         )
 
     def login_step(self):
