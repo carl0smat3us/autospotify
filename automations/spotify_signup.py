@@ -88,6 +88,7 @@ class SpotifySignup(SpotifyBase):
             user=User(
                 username=self.user.username,
                 password=self.user.password,
+                proxy_url=self.user.proxy_url,
                 spotify_account_created="yes",
             ),
         )

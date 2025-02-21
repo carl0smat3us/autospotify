@@ -20,6 +20,7 @@ class SpotifyBase(Base):
             base_url=base_url,
             extensions=extensions,
             enable_captcha_solver=enable_captcha_solver,
+            enable_undetected_chromedriver=True,
         )
 
     def play(self, user_index=None):

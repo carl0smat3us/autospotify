@@ -24,6 +24,10 @@ spotify_login_url = "https://www.spotify.com/login"
 
 spotify_signup_url = "https://www.spotify.com/signup"
 
+proton_signup_url = (
+    "https://account.proton.me/mail/signup?plan=free&ref=mail_plus_intro-mailpricing-2"
+)
+
 spotify_supported_languages = [
     "en-US",
     "en-GB",

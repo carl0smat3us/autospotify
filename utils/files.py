@@ -27,21 +27,42 @@ def read_proxies_from_txt():
         return []
 
 
-def read_users_from_json(filters: AccountFilter = {}) -> List[User]:
+def read_user_from_json(username: str) -> User:
+    try:
+        with open(accounts_path, "r", encoding="utf-8") as file:
+            users = json.load(file)
+
+        for user in users:
+            if user["username"] == username:
+                return user
+    except FileNotFoundError:
+        return None
+    except json.JSONDecodeError:
+        log(f"Error: The file '{accounts_path}' is not a valid JSON.", ERROR)
+        raise
+    except Exception as e:
+        log(f"Error reading JSON file: {e}", ERROR)
+        raise
+
+
+def read_users_from_json(filters: AccountFilter = None) -> List[User]:
     try:
         final_users = []
 
         with open(accounts_path, "r", encoding="utf-8") as file:
             users = json.load(file)
 
-        if filters and isinstance(filters, dict):
+        if filters:
+            filtered_data = {
+                k: v for k, v in filters.model_dump().items() if v is not None
+            }
+
             for user in users:
-                if all(user.get(k) == v for k, v in filters.items()):
+                if all(user.get(k) == v for k, v in filtered_data.items()):
                     final_users.append(User(**user))
         else:
             final_users = [User(**user) for user in users]
-
-            return final_users
+        return final_users
     except FileNotFoundError:
         return []
     except json.JSONDecodeError:
@@ -59,7 +80,7 @@ def write_users_to_json(users: List[User]):
 
 def upsert_user(user: User):
     try:
-        users = read_users_from_json(accounts_path)
+        users = read_users_from_json()
         user_found = False
 
         for i, existing_user in enumerate(users):

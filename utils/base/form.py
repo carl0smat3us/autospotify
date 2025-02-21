@@ -15,7 +15,10 @@ class Form(Time):
     def __init__(self, driver: WebDriver):
         self.driver = driver
 
-    def click(self, query: FindElement, use_javascript=False):
+    def click(self, query: FindElement, use_javascript=False, wait_until_search=False):
+        if wait_until_search:
+            sleep(self.delay_start_interactions)
+
         element = self.driver.find_element(by=query.by, value=query.value)
 
         sleep(self.delay_start_interactions)
@@ -35,6 +38,11 @@ class Form(Time):
         random_index = random.randint(1, len(options) - 1) if len(options) > 1 else 0
         select_element.select_by_index(random_index)
 
+        sleep(self.delay_start_interactions)
+
+    def select_by_index(self, select_element: Select, index: int):
+        sleep(self.delay_start_interactions)
+        select_element.select_by_index(index)
         sleep(self.delay_start_interactions)
 
     def select_random_email_domain(self, select_element: WebElement):

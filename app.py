@@ -1,5 +1,7 @@
 import os
 
+from selenium.common.exceptions import InvalidSessionIdException
+
 import settings
 
 
@@ -25,9 +27,10 @@ from dotenv import load_dotenv
 
 from automations.spotify_playlist import SpotifyPlaylist
 from automations.spotify_signup import SpotifySignup
+
+# from automations.webmail_signup import MailSignUp
 from automations.webmail_login import MailLogin
-from automations.webmail_signup import MailSignUp
-from utils.files import read_users_from_json
+from utils.files import read_user_from_json, read_users_from_json, upsert_user
 from utils.logs import log
 from utils.schemas import AccountFilter, User
 
@@ -50,6 +53,36 @@ def clean_terminal_timer():
     clear_terminal()
 
 
+def add_webmail_accounts():
+    while True:
+        print()
+        username = input("📧 Entrez l'email : ")
+        password = input("🔑 Entrez le mot de passe : ")
+
+        action = input("\n✅ Voulez-vous confirmer l'ajout du compte ? (O/N) : ")
+
+        if action.upper() == "N":
+            print("❌ Ajout annulé.")
+            break
+
+        user = read_user_from_json(username)
+
+        if user:
+            print("⚠️ Cet utilisateur existe déjà !")
+        else:
+            upsert_user(user=User(username=username, password=password))
+            print("✅ Utilisateur ajouté avec succès !")
+
+        action = input("\n➕ Voulez-vous ajouter un autre compte ? (O/N) : ")
+
+        if action.upper() == "N":
+            print("👋 Fin du processus d'ajout.")
+            clean_terminal_timer()
+            break
+
+        clean_terminal_timer()
+
+
 def clear_terminal():
     if os.name == "nt":  # Windows
         os.system("cls")
@@ -67,7 +100,7 @@ def main():
             print(
                 """
             \nQue voulez-vous faire ?
-            \n1 - Créer des comptes Webmail
+            \n1 - Ajouter des comptes Webmail
             \n2 - Créer des comptes Spotify
             \n3 - Activer des comptes Spotify
             \n4 - Écouter une playlist Spotify
@@ -78,26 +111,27 @@ def main():
             action = input("Entrez votre choix: ").strip()
 
             if action == "1":
-                print("\nDémarrage de la création de compte Webmail...")
+                add_webmail_accounts()
+                # print("\nDémarrage de la création de compte Webmail...")
 
-                while True:
-                    try:
-                        num_accounts = int(
-                            input(f"Combien de comptes voulez-vous créer ?: ").strip()
-                        )
-                        if 1 <= num_accounts:
-                            break
-                        else:
-                            print(f"Veuillez entrer un nombre supérieur à 0.")
-                    except ValueError:
-                        print("Veuillez entrer un nombre valide.")
+                # while True:
+                #     try:
+                #         num_accounts = int(
+                #             input(f"Combien de comptes voulez-vous créer ?: ").strip()
+                #         )
+                #         if 1 <= num_accounts:
+                #             break
+                #         else:
+                #             print(f"Veuillez entrer un nombre supérieur à 0.")
+                #     except ValueError:
+                #         print("Veuillez entrer un nombre valide.")
 
-                for i in range(num_accounts):
-                    log(f"Création du compte {i + 1} sur {num_accounts}...")
-                    webmail_signup = MailSignUp()
-                    webmail_signup.run()
+                # for i in range(num_accounts):
+                #     log(f"Création du compte {i + 1} sur {num_accounts}...")
+                #     webmail_signup = MailSignUp()
+                #     webmail_signup.run()
 
-                clean_terminal_timer()
+                # clean_terminal_timer()
 
             elif action == "2":
                 print("\nDémarrage de la création de compte Spotify...")
@@ -106,7 +140,6 @@ def main():
                     filters=AccountFilter(spotify_account_created="no"),
                 )
 
-                # Verifica se há usuários disponíveis
                 if not users:
                     print(
                         "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
@@ -145,7 +178,6 @@ def main():
                     filters=AccountFilter(spotify_account_activated="no"),
                 )
 
-                # Verifica se há usuários disponíveis
                 if not users:
                     print(
                         "Aucun utilisateur trouvé dans le fichier JSON. Opération annulée."
@@ -192,10 +224,7 @@ def main():
                             )
 
                             spotify_playlist = SpotifyPlaylist(
-                                user=User(
-                                    username=user.username,
-                                    password=user.password,
-                                ),
+                                user=user,
                                 track_url=track_url,
                                 user_index=users_index + 1,
                             )
@@ -209,6 +238,10 @@ def main():
             else:
                 print("\nChoix invalide.")
                 sleep(2)
+
+        except InvalidSessionIdException:
+            log("⚠️ Session invalide.", ERROR)
+            break
 
         except KeyboardInterrupt:
             log("🛑 Le script a été arrêté manuellement. ⏹️", ERROR)

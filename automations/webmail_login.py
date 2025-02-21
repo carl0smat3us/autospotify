@@ -1,3 +1,8 @@
+import re
+from logging import ERROR
+from time import sleep
+from urllib.parse import parse_qs, unquote, urlparse
+
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,24 +17,44 @@ from utils.schemas import FindElement, User
 
 class MailLogin(Base):
     def __init__(self, user: User):
-        super().__init__(user=user, base_url=settings.webmail_login_url)
-
-        self.activated = False
+        super().__init__(
+            user=user,
+            base_url=settings.webmail_login_url,
+            extensions=[
+                "https://chromewebstore.google.com/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm"
+            ],
+            enable_undetected_chromedriver=True,
+        )
 
     def login_step(self):
         self.log_step("taper les informations de login")
 
         try:
             self.click(
-                query=FindElement(by=By.ID, value="login-button")
+                query=FindElement(by=By.CSS_SELECTOR, value=".icon-close.js-close"),
+                use_javascript=True,
+                wait_until_search=True,
+            )  # Close blog PopUp
+        except:
+            ...
+
+        try:
+            self.click(
+                query=FindElement(by=By.ID, value="login-button"),
+                use_javascript=True,
+                wait_until_search=True,
             )  # Expand login PopUp
         except NoSuchElementException:
             raise RetryAgain("La page semble ne pas avoir été bien chargée.")
 
-        username_input = self.driver.find_element(By.ID, "login-email")
+        username_input = WebDriverWait(self.driver, 30).until(
+            EC.visibility_of_element_located((By.ID, "login-email"))
+        )
         self.fill_input(username_input, self.user.username)
 
-        password_input = self.driver.find_element(By.ID, "login-password")
+        password_input = WebDriverWait(self.driver, 30).until(
+            EC.visibility_of_element_located((By.ID, "login-password"))
+        )
         self.fill_input(password_input, self.user.password)
 
         self.submit_form(
@@ -39,44 +64,43 @@ class MailLogin(Base):
             )
         )
 
-    def get_mail_list_step(self):
-        self.check_page_url(
-            keyword="navigator-lxa.mail.com", step_name="obeternir la liste d'emails"
-        )
+    def activate_account_step(self):
+        mail_list = self.get_mail_list_step()
+        mail_found = False
 
-        WebDriverWait(self.driver, 180).until(
-            EC.frame_to_be_available_and_switch_to_it((By.ID, "thirdPartyFrame_mail"))
-        )
+        for mail in mail_list:
+            if "Spotify" in mail.sender:
+                mail_found = True
 
-        mail_box = self.driver.find_elements(By.ID, "mail-list")
-
-        messages = []
-
-        # Scroll through the mail list
-        for mail in mail_box:
-            subject_element = mail.find_element(By.CLASS_NAME, "subject")
-            sender_element = mail.find_element(By.CLASS_NAME, "name")
-            data_element = mail.find_element(By.CLASS_NAME, "date")
-
-            messages.append(
-                {
-                    "sender": sender_element.text,
-                    "subject": subject_element.text,
-                    "date": data_element.text,
-                }
-            )
-
-            if "Confirmer" in subject_element.text:  # Search for the activation mail
-                self.click(mail)
-                self.activate_account_step()
+                sleep(self.delay_start_interactions)
+                mail.click()
+                sleep(self.delay_start_interactions)
                 break
 
-    def activate_account_step(self):
-        self.activated = True
+        self.driver.switch_to.default_content()
+
+        if mail_found:
+            WebDriverWait(self.driver, 15).until(
+                EC.frame_to_be_available_and_switch_to_it(
+                    (By.ID, "thirdPartyFrame_mail")
+                )
+            )
+
+            WebDriverWait(self.driver, 15).until(
+                EC.frame_to_be_available_and_switch_to_it((By.ID, "mail-detail"))
+            )
+
+            confirmation_link = self.driver.find_element(
+                By.XPATH, "//a[contains(@href, 'deref-mail.com')]"
+            ).get_attribute("href")
+            redirect_url = unquote(
+                parse_qs(urlparse(confirmation_link).query).get("redirectUrl", [""])[0]
+            )
+
+            self.get_page(redirect_url)
+        else:
+            log("⚠️ L'email Spotify n'a pas été trouvé ❌", ERROR)
 
     def action(self):
         self.login_step()
-        self.get_mail_list_step()
-
-        if not self.activated:
-            log("⚠️ Le compte n'a pas été activé !")
+        self.activate_account_step()
