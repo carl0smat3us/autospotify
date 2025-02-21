@@ -1,7 +1,7 @@
 import logging
 from os import path
 
-import settings
+import autospotify.settings as settings
 
 
 class CustomFormatter(logging.Formatter):

@@ -1,7 +1,17 @@
 from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from selenium.webdriver.common.by import ByType
+from selenium.webdriver.remote.webelement import WebElement
+
+
+class MailBox(BaseModel):
+    element: WebElement
+    sender: str
+    subject: str
+    date: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class Proxy(BaseModel):
@@ -19,6 +29,8 @@ class FindElement(BaseModel):
 class User(BaseModel):
     username: str
     password: str
+
+    proxy_url: Optional[str] = None
 
     spotify_account_created: Literal["yes", "no"] = "no"
     spotify_account_activated: Literal["yes", "no"] = "no"

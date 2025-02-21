@@ -1,6 +1,6 @@
 from logging import ERROR
 
-from utils.logs import log
+from autospotify.utils.logs import log
 
 
 class RetryAgain(Exception):

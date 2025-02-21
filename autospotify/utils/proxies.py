@@ -1,6 +1,6 @@
 import requests
 
-from exceptions import IpAddressError
+from autospotify.exceptions import IpAddressError
 
 
 def transform_proxy(proxy: str, as_dict: bool = False):
@@ -9,6 +9,7 @@ def transform_proxy(proxy: str, as_dict: bool = False):
     """
     try:
         host, port, user, password = proxy.split(":")
+
         return (
             {"host": host, "port": port, "user": user, "password": password}
             if as_dict
@@ -36,9 +37,16 @@ def get_user_ip(proxy_url: str = None) -> str:
     Fetches the public IP address using a proxy (if provided).
     """
     try:
-        proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+        proxy = (
+            {
+                "http": proxy_url,
+                "https": proxy_url,
+            }
+            if proxy_url
+            else None
+        )
         response = requests.get(
-            "https://api.ipify.org?format=json", proxies=proxies, timeout=10
+            "https://api.ipify.org?format=json", proxies=proxy, timeout=10
         )
         response.raise_for_status()
         return response.json().get("ip", "Unknown IP")
