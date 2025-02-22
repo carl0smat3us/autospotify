@@ -24,6 +24,7 @@ from time import sleep
 
 from art import text2art
 from dotenv import load_dotenv
+from faker import Faker
 
 from autospotify.automations.spotify_playlist import SpotifyPlaylist
 from autospotify.automations.spotify_signup import SpotifySignup
@@ -33,7 +34,6 @@ from autospotify.utils.files import (read_user_from_json, read_users_from_json,
                                      upsert_user)
 from autospotify.utils.logs import log
 from autospotify.utils.schemas import AccountFilter, User
-from faker import Faker
 
 faker = Faker()
 

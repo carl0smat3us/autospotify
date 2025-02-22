@@ -5,9 +5,9 @@ from os import path
 from time import sleep
 from typing import List
 
+import undetected as uc
 from chrome_extension import Extension
 from faker import Faker
-from selenium import webdriver
 from selenium.common.exceptions import (ElementNotInteractableException,
                                         InvalidSessionIdException,
                                         NoAlertPresentException,
@@ -68,7 +68,7 @@ class Base(Form, Time):
 
         self.solved_captchas = 0
 
-        self.browser_options = webdriver.ChromeOptions()
+        self.browser_options = uc.ChromeOptions()
         self.browser_options.add_argument("--disable-logging")
         self.browser_options.add_argument("--log-level=3")
         self.browser_options.add_argument("--disable-infobars")
@@ -80,7 +80,7 @@ class Base(Form, Time):
         self.browser_options.add_argument("--disable-cookies")
 
         if enable_captcha_solver:
-            ...
+            pass
 
         if len(self.proxies) == 0:
             log("🚨 Aucun proxy ! Utilisation de votre IP. 🌐🔍")
@@ -94,7 +94,9 @@ class Base(Form, Time):
                     if not proxy_used:
                         self.user.proxy_url = proxy
 
-            proxy_helper = SeleniumAuthenticatedProxy(proxy_url=self.user.proxy_url)
+            proxy_helper = SeleniumAuthenticatedProxy(
+                proxy_url=self.user.proxy_url, tmp_folder=settings.app_folder
+            )
             proxy_helper.enrich_chrome_options(self.browser_options)
 
         for extension in extensions:
@@ -106,7 +108,7 @@ class Base(Form, Time):
                 ).load()
             )
 
-        self.driver = webdriver.Chrome(
+        self.driver = uc.Chrome(
             options=self.browser_options,
         )
 
