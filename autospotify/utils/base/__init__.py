@@ -15,7 +15,6 @@ from selenium.common.exceptions import (ElementNotInteractableException,
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 from tabulate import tabulate
 
 import autospotify.settings as settings
@@ -24,9 +23,11 @@ from autospotify.exceptions import (CaptchaUnsolvable, IpAddressError,
 from autospotify.utils.base.form import Form
 from autospotify.utils.base.time import Time
 from autospotify.utils.browser import get_chrome_version
+from autospotify.utils.chrome_proxy import ChromeProxy
 from autospotify.utils.files import read_proxies_from_txt, read_users_from_json
 from autospotify.utils.logs import log
-from autospotify.utils.proxies import get_user_ip
+from autospotify.utils.proxies import (get_user_ip,
+                                       proxy_transformed_url_to_dict)
 from autospotify.utils.schemas import FindElement, MailBox, User
 
 user_agents = [
@@ -94,10 +95,17 @@ class Base(Form, Time):
                     if not proxy_used:
                         self.user.proxy_url = proxy
 
-            proxy_helper = SeleniumAuthenticatedProxy(
-                proxy_url=self.user.proxy_url, tmp_folder=settings.app_folder
+            proxy = proxy_transformed_url_to_dict(self.user.proxy_url)
+
+            chrome_proxy = ChromeProxy(
+                host=proxy.host,
+                port=proxy.port,
+                username=proxy.username,
+                password=proxy.password,
             )
-            proxy_helper.enrich_chrome_options(self.browser_options)
+            extension_path = chrome_proxy.create_extension()
+
+            self.browser_options.add_argument(f"--load-extension={extension_path}")
 
         for extension in extensions:
             self.browser_options.add_argument(

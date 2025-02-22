@@ -1495,20 +1495,6 @@ urllib3 = {version = ">=1.26,<3", extras = ["socks"]}
 websocket-client = ">=1.8,<2.0"
 
 [[package]]
-name = "selenium-authenticated-proxy"
-version = "1.1.2"
-description = "A python package to add authenticated proxy support to selenium."
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "selenium_authenticated_proxy-1.1.2-py3-none-any.whl", hash = "sha256:c48dcdafd66d18e5a419f47f32c2da8156647bb1468268eccc208a7efbac6bc0"},
-]
-
-[package.dependencies]
-selenium = "*"
-
-[[package]]
 name = "setuptools"
 version = "75.8.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -1905,4 +1891,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "162be002e25c198cf03529175ed07c04ede93bfffb0f319055738f3ba8782f81"
+content-hash = "25ef50d55805c856fe369fa825dbe65e4df792af27d26f249e2af4274e5ef8b1"
