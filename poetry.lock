@@ -5151,14 +5151,14 @@ files = [
 
 [[package]]
 name = "undetected"
-version = "0.0.1"
+version = "0.0.2"
 description = "Selenium.webdriver.Chrome replacement with compatibility for Brave, and other Chromium based browsers. Not triggered by CloudFlare/Imperva/hCaptcha and such. NOTE: results may vary due to many factors. No guarantees are given, except for ongoing efforts in understanding detection algorithms."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "undetected-0.0.1-py3-none-any.whl", hash = "sha256:3c70b43b8d6da892226edf08a470ece4e346d64f6c86d3ed366dbbf1815c69d1"},
-    {file = "undetected-0.0.1.tar.gz", hash = "sha256:936a2c50da6098f8679c917a95150a1408cf0e55c04e0dd94e0b238464ad6b3d"},
+    {file = "undetected-0.0.2-py3-none-any.whl", hash = "sha256:546351742a237c942b81c64e7452a2836493a6c464272cf112d4536435f30ec2"},
+    {file = "undetected-0.0.2.tar.gz", hash = "sha256:667a13faf077a9330ab67536ed28238fe1ec3a41cd627cc153c97db23c4263bb"},
 ]
 
 [package.dependencies]
@@ -5324,4 +5324,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "c888bfcddb49c51955102cb5bd4b4e5c2fa00890af9bd15ff374ca598ef06b67"
+content-hash = "d38a38c9354e80aceca43ac80784b96bf33dac977ce771b45ac211189c077a77"
