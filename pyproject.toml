@@ -29,7 +29,7 @@ dependencies = [
 [tool.taskipy.tasks]
 lint = "black autospotify/ && isort autospotify/"
 run = "python -m autospotify"
-build = "poetry run pyinstaller autospotify/__main__.py --onefile --name autospotify --collect-submodules autospotify --icon=assets/icon.png"
+build = "poetry run pyinstaller autospotify/__main__.py --onefile --name autospotify --collect-submodules autospotify --icon=assets/icon.ico"
 
 
 [tool.poetry.group.dev.dependencies]
