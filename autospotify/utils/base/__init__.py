@@ -5,6 +5,7 @@ from os import path
 from time import sleep
 from typing import List
 
+import keyboard
 import undetected as uc
 from chrome_extension import Extension
 from faker import Faker
@@ -18,6 +19,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from tabulate import tabulate
 
 import autospotify.settings as settings
+from autospotify.constants import USER_AGENTS
 from autospotify.exceptions import (CaptchaUnsolvable, IpAddressError,
                                     RetryAgain)
 from autospotify.utils.base.form import Form
@@ -30,19 +32,6 @@ from autospotify.utils.proxies import (get_user_ip,
                                        proxy_transformed_url_to_dict)
 from autospotify.utils.schemas import FindElement, MailBox, User
 
-user_agents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Thunderbird/91.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chromium/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
-    "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
-]
-
 
 class Base(Form, Time):
     def __init__(
@@ -50,7 +39,6 @@ class Base(Form, Time):
         user: User,
         base_url: str,
         extensions: List[str] = [],
-        enable_captcha_solver=False,
     ):
         self.faker = Faker()
 
@@ -58,12 +46,11 @@ class Base(Form, Time):
 
         self.retries = 0
         self.max_retries = 5
-        self.enable_captcha_solver = enable_captcha_solver
 
         self.user = user
 
         self.two_captcha_activated = False
-        self.user_agent = random.choice(user_agents)
+        self.user_agent = random.choice(USER_AGENTS)
         self.proxies = read_proxies_from_txt()
         self.ip = get_user_ip()
 
@@ -80,13 +67,10 @@ class Base(Form, Time):
         self.browser_options.add_argument("--disable-dev-shm-usage")
         self.browser_options.add_argument("--disable-cookies")
 
-        if enable_captcha_solver:
-            pass
-
-        if len(self.proxies) == 0:
+        if len(self.proxies) == 0 and not self.user.proxy_url:
             log("🚨 Aucun proxy ! Utilisation de votre IP. 🌐🔍")
 
-        if len(self.proxies) >= 1:
+        if len(self.proxies) >= 1 or self.user.proxy_url:
             users = read_users_from_json()
 
             if not self.user.proxy_url:
@@ -235,6 +219,7 @@ class Base(Form, Time):
                 "Le site a bloqué votre IP à cause d'une activité suspecte 🚫🔒"
             )
 
+        self.close_browser_popup()
         self.accept_cookies()
         sleep(self.delay_start_interactions)
 
@@ -252,8 +237,6 @@ class Base(Form, Time):
     def run(self):
         def wrapper():
             self.get_page(self.base_url, True)
-            if self.enable_captcha_solver:
-                self.activate_captcha_solver()
             self.action()
 
         run = self.run_preveting_errors(wrapper)
@@ -362,6 +345,14 @@ class Base(Form, Time):
             self.log_mail_list(messages)
 
         return messages
+
+    def close_browser_popup(self):
+        self.log_step("S'assurer que le popup demandant d'ouvrir Spotify est fermé")
+
+        for _ in range(5):  # Ensure that the App Link Prompt is being closed
+            keyboard.send("esc")
+            sleep(2)
+        sleep(5)
 
     def run_preveting_errors(self, run):
         def inner_function(*args, **kwargs):

@@ -230,6 +230,7 @@ def main():
             else:
                 print("\nChoix invalide.")
                 sleep(2)
+                clean_terminal_timer()
 
         except InvalidSessionIdException:
             log("⚠️ Session invalide.", ERROR)
