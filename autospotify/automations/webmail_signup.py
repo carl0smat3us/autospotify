@@ -15,9 +15,7 @@ from autospotify.utils.schemas import FindElement, User
 
 class MailSignUp(Base):
     def __init__(self):
-        super().__init__(
-            user=None, base_url=settings.webmail_signup_url, enable_captcha_solver=True
-        )
+        super().__init__(user=None, base_url=settings.webmail_signup_url)
 
         username = f"""{self.faker.last_name().lower()}{self.faker.last_name().lower()}{self.faker.last_name().lower()}"""
 

@@ -13,13 +13,11 @@ class SpotifyBase(Base):
         user: User,
         base_url: str,
         extensions=[],
-        enable_captcha_solver=False,
     ):
         super().__init__(
             user=user,
             base_url=base_url,
             extensions=extensions,
-            enable_captcha_solver=enable_captcha_solver,
         )
 
     def play(self, user_index=None):

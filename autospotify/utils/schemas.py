@@ -33,7 +33,6 @@ class User(BaseModel):
     proxy_url: Optional[str] = None
 
     spotify_account_created: Literal["yes", "no"] = "no"
-    spotify_account_activated: Literal["yes", "no"] = "no"
 
 
 class AccountFilter(BaseModel):
@@ -41,4 +40,3 @@ class AccountFilter(BaseModel):
     password: Optional[str] = None
 
     spotify_account_created: Literal["yes", "no"] = None
-    spotify_account_activated: Literal["yes", "no"] = None

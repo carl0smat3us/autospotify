@@ -1,10 +1,8 @@
 import random
 from time import sleep
 
-from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -12,6 +10,8 @@ import autospotify.settings as settings
 from autospotify.utils.base.automation.spotify import SpotifyBase
 from autospotify.utils.logs import log
 from autospotify.utils.schemas import FindElement, User
+
+SONG_END_PERCENTAGE = 95
 
 
 class SpotifyPlaylist(SpotifyBase):
@@ -25,14 +25,21 @@ class SpotifyPlaylist(SpotifyBase):
         self.track_url = track_url
         self.user_index = user_index
 
+    def password_step(self):
+        password_input = self.driver.find_element(By.ID, "login-password")
+        self.fill_input(password_input, self.user.password)
+
     def login_step(self):
         username_input = WebDriverWait(self.driver, 180).until(
             EC.visibility_of_element_located((By.ID, "login-username"))
         )
         self.fill_input(username_input, self.user.username)
 
-        password_input = self.driver.find_element(By.ID, "login-password")
-        self.fill_input(password_input, self.user.password)
+        try:
+            self.password_step()
+        except:
+            self.click(query=FindElement(by=By.ID, value="login-button"))
+            self.password_step()
 
         self.click(query=FindElement(by=By.ID, value="login-button"))
 
@@ -83,8 +90,8 @@ class SpotifyPlaylist(SpotifyBase):
                     )[0]
                 )
 
-                if percentage >= 5:
-                    sleep(30)
+                if percentage >= SONG_END_PERCENTAGE:
+                    sleep(40)
 
                     log(
                         f"🎧 Le {self.user_index}° bot a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
@@ -141,12 +148,6 @@ class SpotifyPlaylist(SpotifyBase):
 
     def open_playlist(self):
         self.get_page(self.track_url)
-
-        for _ in range(5):  # Ensure that the App Link Prompt is being closed
-            webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
-            sleep(2)
-
-        sleep(5)
 
     def listening_step(self):
         self.open_playlist()
