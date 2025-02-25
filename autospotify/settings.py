@@ -1,10 +1,13 @@
 from os import path
+from tempfile import gettempdir
 
 app_folder = path.join(path.expanduser("~"), "Documents", "AutoSpotify")
 
 accounts_path = path.join(app_folder, "accounts.json")
 
 proxies_path = path.join(app_folder, "proxies.txt")
+
+extensions_path = gettempdir()
 
 logs_folder = path.join(app_folder, "logs")
 

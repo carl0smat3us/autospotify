@@ -46,6 +46,10 @@ def get_user_ip(proxy_url: str = None) -> str:
             "https://api.ipify.org?format=json", proxies=proxy, timeout=10
         )
         response.raise_for_status()
-        return response.json().get("ip", "Unknown IP")
-    except requests.exceptions.RequestException as e:
-        raise IpAddressError(f"Error fetching IP: {e}")
+        return response.json().get("ip", "IP inconnue")
+    except:
+        raise IpAddressError(
+            "❌ Erreur lors de la récupération de l'adresse IP ! Veuillez réessayer plus tard. 🌐\n"
+            "➡️ Vérifiez que le format du proxy dans le fichier est bien `http://user:pass@host:port`. \n"
+            "📡 Assurez-vous également d'avoir encore des données disponibles sur votre plateforme de proxy."
+        )

@@ -37,7 +37,7 @@ from autospotify.utils.schemas import AccountFilter, User
 
 faker = Faker()
 
-logo = text2art("SPOTIFY")
+logo = text2art("autospotify")
 load_dotenv()
 
 
@@ -63,6 +63,8 @@ def add_webmail_accounts():
         password = input("🔑 Entrez le mot de passe : ").strip()
 
         if not username:
+            print("⚠️ Aucun compte n'a été ajouté !")
+            clean_terminal_timer()
             break
 
         if not password:
