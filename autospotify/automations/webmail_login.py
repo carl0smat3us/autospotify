@@ -10,12 +10,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import autospotify.settings as settings
 from autospotify.exceptions import RetryAgain
-from autospotify.utils.base import Base
+from autospotify.utils.base.automation.webmail import WebmailBase
 from autospotify.utils.logs import log
 from autospotify.utils.schemas import FindElement, User
 
 
-class MailLogin(Base):
+class MailLogin(WebmailBase):
     def __init__(self, user: User):
         super().__init__(
             user=user,

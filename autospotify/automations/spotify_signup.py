@@ -11,7 +11,9 @@ from autospotify.utils.schemas import FindElement, User
 
 class SpotifySignup(SpotifyBase):
     def __init__(self, user: User):
-        super().__init__(user=user, base_url=settings.spotify_signup_url)
+        super().__init__(
+            user=user, base_url=settings.spotify_signup_url, captcha_solver_enabled=True
+        )
 
     def username_step(self):
         username_input = self.driver.find_element(By.ID, "username")
@@ -42,7 +44,8 @@ class SpotifySignup(SpotifyBase):
         self.select_random_option(month_select)
 
         year_input = self.driver.find_element(By.NAME, "year")
-        self.fill_input(year_input, str(random.randint(1990, 2005)))
+        year_input.send_keys(str(random.randint(1990, 2005)))
+        # self.fill_input(year_input, str(random.randint(1990, 2005)))
 
         # Select Gender
         genders_list = ["gender_option_male", "gender_option_female"]
@@ -80,7 +83,7 @@ class SpotifySignup(SpotifyBase):
 
         self.terms_step()
 
-        self.click(query=self.button_next)
+        self.submit_form(query=self.button_next)
 
         self.check_page_url(keyword="download", step_name="accueil")
 

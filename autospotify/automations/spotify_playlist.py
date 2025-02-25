@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 import autospotify.settings as settings
+from autospotify.exceptions import RetryAgain
 from autospotify.utils.base.automation.spotify import SpotifyBase
 from autospotify.utils.logs import log
 from autospotify.utils.schemas import FindElement, User
@@ -30,24 +31,29 @@ class SpotifyPlaylist(SpotifyBase):
         self.fill_input(password_input, self.user.password)
 
     def login_step(self):
-        username_input = WebDriverWait(self.driver, 180).until(
-            EC.visibility_of_element_located((By.ID, "login-username"))
-        )
-        self.fill_input(username_input, self.user.username)
-
         try:
-            self.password_step()
-        except:
+            username_input = WebDriverWait(self.driver, 180).until(
+                EC.visibility_of_element_located((By.ID, "login-username"))
+            )
+            self.fill_input(username_input, self.user.username)
+
+            try:
+                self.password_step()
+            except NoSuchElementException:
+                self.click(query=FindElement(by=By.ID, value="login-button"))
+                self.password_step()
+
             self.click(query=FindElement(by=By.ID, value="login-button"))
-            self.password_step()
 
-        self.click(query=FindElement(by=By.ID, value="login-button"))
+            self.check_page_url(keyword="account/overview", step_name="se connecter")
 
-        self.check_page_url(keyword="account/overview", step_name="se connecter")
-
-        log(
-            f"✅ L'utilisateur s'est connecté avec succès : compte de {self.user.username} ! 🚀"
-        )
+            log(
+                f"✅ L'utilisateur s'est connecté avec succès : compte de {self.user.username} ! 🚀"
+            )
+        except:
+            raise RetryAgain(
+                "⚠️ Spotify a changé leur page de login aléatoirement. C'est normal que ça arrive ! 🔄🎵"
+            )
 
     def show_track_info(self):
         self.title = self.driver.find_element(
@@ -83,6 +89,9 @@ class SpotifyPlaylist(SpotifyBase):
                 last_song.find_element(By.XPATH, './/button[@aria-label="Pause"]')
 
                 progress_transform = progress_bar.get_attribute("style")
+
+                if not progress_transform:
+                    raise Exception("La playlist n'a pas commencé à jouer 🎵🚫")
 
                 percentage = float(
                     progress_transform.split("--progress-bar-transform: ")[1].split(
@@ -127,10 +136,9 @@ class SpotifyPlaylist(SpotifyBase):
                 value="//div[@data-testid='infinite-scroll-list']//span[@role='presentation']",
             ),
             use_javascript=False,
-        )
+        )  # open artist page
 
         self.check_page_url(keyword="artist")
-
         self.play()
 
     def choose_an_artist(self):
@@ -146,18 +154,15 @@ class SpotifyPlaylist(SpotifyBase):
 
         self.listen_to_random_artist()
 
-    def open_playlist(self):
-        self.get_page(self.track_url)
-
     def listening_step(self):
-        self.open_playlist()
+        self.get_page(self.track_url)
 
         self.choose_an_artist()  # Chose a favorite artist if asked
 
         if (
             "/artist" in self.driver.current_url
         ):  # Check if the user was listening to their favorite artist
-            self.open_playlist()
+            self.get_page(self.track_url)
 
         self.show_track_info()
         self.play(self.user_index)

@@ -9,28 +9,29 @@ import keyboard
 import undetected as uc
 from chrome_extension import Extension
 from faker import Faker
+from selenium import webdriver
 from selenium.common.exceptions import (ElementNotInteractableException,
                                         InvalidSessionIdException,
                                         NoAlertPresentException,
                                         NoSuchWindowException)
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from tabulate import tabulate
 
 import autospotify.settings as settings
 from autospotify.constants import USER_AGENTS
-from autospotify.exceptions import (CaptchaUnsolvable, IpAddressError,
-                                    RetryAgain)
+from autospotify.exceptions import IpAddressError, RetryAgain
 from autospotify.utils.base.form import Form
 from autospotify.utils.base.time import Time
 from autospotify.utils.browser import get_chrome_version
+from autospotify.utils.captcha_solver import CaptchaSolver
 from autospotify.utils.chrome_proxy import ChromeProxy
 from autospotify.utils.files import read_proxies_from_txt, read_users_from_json
 from autospotify.utils.logs import log
 from autospotify.utils.proxies import (get_user_ip,
                                        proxy_transformed_url_to_dict)
-from autospotify.utils.schemas import FindElement, MailBox, User
+from autospotify.utils.schemas import FindElement, User
 
 
 class Base(Form, Time):
@@ -38,6 +39,7 @@ class Base(Form, Time):
         self,
         user: User,
         base_url: str,
+        captcha_solver_enabled: bool,
         extensions: List[str] = [],
     ):
         self.faker = Faker()
@@ -49,14 +51,14 @@ class Base(Form, Time):
 
         self.user = user
 
-        self.two_captcha_activated = False
+        self.captcha_solver_enabled = captcha_solver_enabled
+        self.captcha_solver_activated = False
+
         self.user_agent = random.choice(USER_AGENTS)
         self.proxies = read_proxies_from_txt()
         self.ip = get_user_ip()
 
-        self.solved_captchas = 0
-
-        self.browser_options = uc.ChromeOptions()
+        self.browser_options = webdriver.ChromeOptions()
         self.browser_options.add_argument("--disable-logging")
         self.browser_options.add_argument("--log-level=3")
         self.browser_options.add_argument("--disable-infobars")
@@ -66,6 +68,20 @@ class Base(Form, Time):
         self.browser_options.add_argument(f"--user-agent={self.user_agent}")
         self.browser_options.add_argument("--disable-dev-shm-usage")
         self.browser_options.add_argument("--disable-cookies")
+
+        if self.captcha_solver_enabled:
+            self.browser_options.add_experimental_option(
+                "excludeSwitches", ["enable-automation", "enable-logging"]
+            )
+            self.browser_options.add_experimental_option(
+                "prefs", {"profile.default_content_setting_values.notifications": 2}
+            )
+            self.browser_options.add_argument(
+                CaptchaSolver(
+                    api_key="59edebcdb934c8e84078e0f6ff325ae6",
+                    download_dir=path.join(settings.app_folder, "extensions"),
+                ).load()
+            )
 
         if len(self.proxies) == 0 and not self.user.proxy_url:
             log("🚨 Aucun proxy ! Utilisation de votre IP. 🌐🔍")
@@ -87,8 +103,8 @@ class Base(Form, Time):
                 username=proxy.username,
                 password=proxy.password,
             )
-            extension_path = chrome_proxy.create_extension()
 
+            extension_path = chrome_proxy.create_extension()
             self.browser_options.add_argument(f"--load-extension={extension_path}")
 
         for extension in extensions:
@@ -100,11 +116,21 @@ class Base(Form, Time):
                 ).load()
             )
 
-        self.driver = uc.Chrome(
-            options=self.browser_options,
-        )
+        if self.captcha_solver_enabled:
+            self.driver = webdriver.Chrome(
+                options=self.browser_options,
+            )
+        else:
+            self.driver = uc.Chrome(
+                options=self.browser_options,
+            )
 
-        self.driver.maximize_window()
+        self.actions = ActionChains(self.driver)
+
+        try:  # prevent error when the driver is minimized
+            self.driver.maximize_window()
+        except:
+            ...
 
         Form.__init__(self, self.driver)
         Time.__init__(self)
@@ -115,113 +141,92 @@ class Base(Form, Time):
         digits = "".join([str(random.randint(0, 9)) for _ in range(8)])
         return f"{prefix}{digits[:2]}{digits[2:4]}{digits[4:6]}{digits[6:8]}"
 
+    def switch_back_to_main(self):
+        self.log_step("retourner à la page principale")
+        main_tab = self.driver.window_handles[0]
+        self.driver.switch_to.window(main_tab)
+        sleep(self.delay_start_interactions)
+
     def activate_captcha_solver(self):
-        if not self.two_captcha_activated:
-            self.log_step("activation de l'extension")
+        if not self.captcha_solver_activated:
+            if len(self.driver.window_handles) == 1:
+                # if the extension tab was'nt opened automaticly open it
+                self.driver.switch_to.new_window("tab")
+                self.get_page(
+                    url="chrome-extension://ifibfemgeogfhoebkmokieepdoobkbpo/options/options.html",
+                    is_first_request=False,
+                )
 
-            handles = self.driver.window_handles
-
-            main_tab = handles[0]
-            extension_tab = handles[1]
+            tabs = self.driver.window_handles
+            main_tab = tabs[0]
+            extension_tab = tabs[1]
 
             try:
+                self.log_step("activation de l'extension")
+
                 self.driver.switch_to.window(main_tab)
                 sleep(2)
-                self.driver.switch_to.window(extension_tab)
 
+                self.driver.switch_to.window(extension_tab)
                 self.check_page_url(keyword="chrome-extension")
 
+                self.click(query=FindElement(by=By.ID, value="isPluginEnabled"))
                 self.click(query=FindElement(by=By.ID, value="connect"))
 
                 # Wait for alert to be present and handle it
                 try:
                     WebDriverWait(self.driver, 15).until(EC.alert_is_present())
+
+                    self.captcha_solver_activated = True
                     alert = self.driver.switch_to.alert
                     alert.accept()
 
                     log(
                         "✅ Connexion réussie à l'extension ! L'alerte a été détectée et fermée. 🚀"
                     )
-                    self.two_captcha_activated = True
                 except NoAlertPresentException:
+                    self.captcha_solver_activated = False
                     log("❌ Aucun message d'alerte trouvé.")
 
             except Exception as e:
+                self.captcha_solver_activated = False
                 log(f"Erreur lors de l'activation de l'extension: {str(e)}")
 
-            sleep(self.delay_start_interactions)
-            self.driver.switch_to.window(main_tab)
+            self.switch_back_to_main()
+            self.driver.refresh()
+            sleep(self.delay_page_loading)
 
-    @property
-    def solve_captcha_button(self):
-        button = FindElement(
-            by=By.CSS_SELECTOR, value=".captcha-solver.captcha-solver_inner"
-        )
+    def get_page(self, url: str, is_first_request=False):
+        sleep(self.delay_start_interactions)
 
-        return button
+        self.driver.get(url)
 
-    def handle_captcha(self):
-        self.log_step("resoudre recaptcha")
-        self.click(query=self.solve_captcha_button, use_javascript=True)
-
-        while True:
-            captcha_status = self.driver.find_element(
-                by=self.solve_captcha_button.by, value=self.solve_captcha_button.value
-            )
-            state = captcha_status.get_attribute("data-state")
-
-            if self.solved_captchas > 4:
-                raise CaptchaUnsolvable(
-                    "Nombre maximal de tentatives captchas atteint.", ERROR
-                )
-
-            if state == "solving":
-                sleep(3)
-                continue
-            elif state == "solved":
-                self.solved_captchas += 1
-                break
-            else:
-                raise RetryAgain("❌ Captcha non résolu.")
-
-    def get_page(self, url: str, show_ip=False):
-        if show_ip:
+        if is_first_request:
             self.ip = get_user_ip(self.user.proxy_url)
             log(f"🤖 Le bot est en train d'utiliser l'IP : {self.ip} 🌍")
 
-        self.driver.get(url)
+            tabs = self.driver.window_handles
+            if len(tabs) > 1:  # Assure that the main tab is active
+                self.switch_back_to_main()
+
         self.verify_page()
 
     def action(self):
         """Run the automation step by step"""
         pass
 
-    def verify_page(self):
+    def check_page_status(self):
         """Check page errors, captchas and cookies not accepted"""
-        log("🔍 Vérification des erreurs, captchas et cookies 🚫🛑")
+        pass
 
+    def verify_page(self):
+        """Check page status"""
+        log("🔍 Vérification des erreurs, captchas et cookies 🚫🛑")
         sleep(self.delay_page_loading)  # Wait till the page full load
 
-        page_text = self.driver.find_element(By.TAG_NAME, "body").text
-
-        if "upstream request timeout" in page_text.lower():
-            raise RetryAgain(
-                "La page indique un délai d'attente de la requête en amont. Arrêt du processus..."
-            )
-
-        elif "challenge.spotify.com" in self.driver.current_url:
-            raise RetryAgain(
-                "CAPTCHA détecté! Aucun solveur CAPTCHA implémenté. Arrêt du processus..."
-            )
-
-        elif "reject.html" in self.driver.current_url:
-            raise IpAddressError(
-                "Le site a bloqué votre IP à cause d'une activité suspecte 🚫🔒"
-            )
-
+        self.check_page_status()
         self.close_browser_popup()
-        self.accept_cookies()
-        sleep(self.delay_start_interactions)
+        self.handle_cookies()
 
     def check_page_url(self, keyword: str, step_name: str = None):
         log(f'🔍 Vérification du mot-clé "{keyword}"')
@@ -236,7 +241,7 @@ class Base(Form, Time):
 
     def run(self):
         def wrapper():
-            self.get_page(self.base_url, True)
+            self.get_page(url=self.base_url, is_first_request=True)
             self.action()
 
         run = self.run_preveting_errors(wrapper)
@@ -259,7 +264,6 @@ class Base(Form, Time):
 
         if message:
             log(message, ERROR)
-
         self.driver.save_screenshot(screenshot_path)
 
     def submit_form(self, query: FindElement, use_javascript=False):
@@ -267,87 +271,23 @@ class Base(Form, Time):
         self.verify_page()
 
     def accept_cookies(self):
+        """Accpet page cookies"""
+        ...
+
+    def handle_cookies(self):
         self.log_step("confirmer les cookies 🍪")
         try:
             sleep(self.delay_start_interactions)
-
-            if (
-                "mail.com" in self.driver.current_url
-                or "navigator-lxa.mail.com" in self.driver.current_url
-            ):
-                try:
-                    WebDriverWait(self.driver, 15).until(
-                        EC.frame_to_be_available_and_switch_to_it(
-                            (By.CSS_SELECTOR, "iframe[src*='lps.navigator-lxa.mail']")
-                        )
-                    )
-                except:
-                    pass
-
-                WebDriverWait(self.driver, 15).until(
-                    EC.frame_to_be_available_and_switch_to_it(
-                        (By.CSS_SELECTOR, "iframe[src*='dl.mail.com']")
-                    )
-                )
-
-                WebDriverWait(self.driver, 15).until(
-                    EC.frame_to_be_available_and_switch_to_it(
-                        (By.CSS_SELECTOR, "iframe[src*='plus.mail.com']")
-                    )
-                )
-
-            self.click(query=FindElement(by=By.ID, value="onetrust-accept-btn-handler"))
+            self.accept_cookies()
             sleep(self.delay_start_interactions)
-            self.driver.switch_to.default_content()
+            self.driver.switch_to.default_content()  # just in case
         except:
             pass
         else:
             log("Les cookies ont été acceptés 🍪")
 
-    def log_mail_list(self, messages: List[MailBox]):
-        table_data = [
-            {k: v for k, v in mail.model_dump().items() if k != "element"}
-            for mail in messages
-        ]
-        log(f"\n{tabulate(table_data, headers="keys", tablefmt="grid")}")
-
-    def get_mail_list_step(self) -> List[MailBox]:
-        self.check_page_url(
-            keyword="navigator-lxa.mail.com", step_name="obeternir la liste d'emails"
-        )
-
-        self.driver.switch_to.default_content()
-
-        WebDriverWait(self.driver, 15).until(
-            EC.frame_to_be_available_and_switch_to_it((By.ID, "thirdPartyFrame_mail"))
-        )
-
-        mail_box = self.driver.find_elements(By.ID, "mail-list")
-
-        messages = []
-
-        # Scroll through the mail list
-        for mail in mail_box:
-            subject_element = mail.find_element(By.CLASS_NAME, "subject")
-            sender_element = mail.find_element(By.CLASS_NAME, "name")
-            data_element = mail.find_element(By.CLASS_NAME, "date")
-
-            messages.append(
-                MailBox(
-                    element=mail,
-                    sender=sender_element.text,
-                    subject=subject_element.text,
-                    date=data_element.text,
-                )
-            )
-
-        if len(messages) >= 1:
-            self.log_mail_list(messages)
-
-        return messages
-
     def close_browser_popup(self):
-        self.log_step("S'assurer que le popup demandant d'ouvrir Spotify est fermé")
+        self.log_step("fermer le popup (app link prompt)")
 
         for _ in range(5):  # Ensure that the App Link Prompt is being closed
             keyboard.send("esc")
