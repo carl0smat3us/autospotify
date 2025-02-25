@@ -21,7 +21,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import autospotify.settings as settings
 from autospotify.constants import USER_AGENTS
-from autospotify.exceptions import IpAddressError, RetryAgain
+from autospotify.exceptions import RetryAgain
 from autospotify.utils.base.form import Form
 from autospotify.utils.base.time import Time
 from autospotify.utils.browser import get_chrome_version
@@ -79,7 +79,7 @@ class Base(Form, Time):
             self.browser_options.add_argument(
                 CaptchaSolver(
                     api_key="59edebcdb934c8e84078e0f6ff325ae6",
-                    download_dir=path.join(settings.app_folder, "extensions"),
+                    download_dir=settings.extensions_path,
                 ).load()
             )
 
@@ -112,7 +112,7 @@ class Base(Form, Time):
                 Extension(
                     extension_link=extension,
                     chrome_version=get_chrome_version(),
-                    download_dir=path.join(settings.app_folder, "extensions"),
+                    download_dir=settings.extensions_path,
                 ).load()
             )
 
@@ -150,8 +150,9 @@ class Base(Form, Time):
     def activate_captcha_solver(self):
         if not self.captcha_solver_activated:
             if len(self.driver.window_handles) == 1:
-                # if the extension tab was'nt opened automaticly open it
+                # if the extension tab was'nt opened automatically open it
                 self.driver.switch_to.new_window("tab")
+                sleep(self.delay_start_interactions)
                 self.get_page(
                     url="chrome-extension://ifibfemgeogfhoebkmokieepdoobkbpo/options/options.html",
                     is_first_request=False,
@@ -224,8 +225,8 @@ class Base(Form, Time):
         log("🔍 Vérification des erreurs, captchas et cookies 🚫🛑")
         sleep(self.delay_page_loading)  # Wait till the page full load
 
-        self.check_page_status()
         self.close_browser_popup()
+        self.check_page_status()
         self.handle_cookies()
 
     def check_page_url(self, keyword: str, step_name: str = None):
@@ -289,10 +290,10 @@ class Base(Form, Time):
     def close_browser_popup(self):
         self.log_step("fermer le popup (app link prompt)")
 
-        for _ in range(5):  # Ensure that the App Link Prompt is being closed
+        for _ in range(10):  # Ensure that the App Link Prompt is being closed
             keyboard.send("esc")
             sleep(2)
-        sleep(5)
+        sleep(self.delay_start_interactions)
 
     def run_preveting_errors(self, run):
         def inner_function(*args, **kwargs):

@@ -100,7 +100,7 @@ class SpotifyPlaylist(SpotifyBase):
                 )
 
                 if percentage >= SONG_END_PERCENTAGE:
-                    sleep(40)
+                    sleep(30)
 
                     log(
                         f"🎧 Le {self.user_index}° bot a terminé d'écouter la playlist. 🎶 Merci pour l'écoute !"
