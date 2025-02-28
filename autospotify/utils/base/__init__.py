@@ -16,6 +16,7 @@ from selenium.common.exceptions import (ElementNotInteractableException,
                                         NoSuchWindowException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -225,7 +226,7 @@ class Base(Form, Time):
         log("🔍 Vérification des erreurs, captchas et cookies 🚫🛑")
         sleep(self.delay_page_loading)  # Wait till the page full load
 
-        self.close_browser_popup()
+        self.try_close_browser_popup()
         self.check_page_status()
         self.handle_cookies()
 
@@ -287,12 +288,14 @@ class Base(Form, Time):
         else:
             log("Les cookies ont été acceptés 🍪")
 
-    def close_browser_popup(self):
+    def try_close_browser_popup(self):
         self.log_step("fermer le popup (app link prompt)")
 
-        for _ in range(10):  # Ensure that the App Link Prompt is being closed
+        for _ in range(20):  # Juste pour s'assurer que le pop-up est bien fermé
             keyboard.send("esc")
-            sleep(2)
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+            sleep(5)
+
         sleep(self.delay_start_interactions)
 
     def run_preveting_errors(self, run):
