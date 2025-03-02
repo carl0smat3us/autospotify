@@ -71,8 +71,8 @@ class Form(Time):
 
     def fill_input(self, element: WebElement, value: str):
         sleep(self.delay_start_interactions)
-
         element.clear()
+
         ty = Typer(
             accuracy=0.90, correction_chance=0.50, typing_delay=(0.04, 0.08), distance=2
         )

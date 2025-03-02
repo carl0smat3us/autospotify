@@ -26,16 +26,19 @@ class SpotifyPlaylist(SpotifyBase):
         self.track_url = track_url
         self.user_index = user_index
 
+    def username_step(self):
+        username_input = WebDriverWait(self.driver, 180).until(
+            EC.visibility_of_element_located((By.ID, "login-username"))
+        )
+        self.fill_input(username_input, self.user.username)
+
     def password_step(self):
         password_input = self.driver.find_element(By.ID, "login-password")
         self.fill_input(password_input, self.user.password)
 
     def login_step(self):
         try:
-            username_input = WebDriverWait(self.driver, 180).until(
-                EC.visibility_of_element_located((By.ID, "login-username"))
-            )
-            self.fill_input(username_input, self.user.username)
+            self.username_step()
 
             try:
                 self.password_step()
@@ -45,8 +48,6 @@ class SpotifyPlaylist(SpotifyBase):
 
             self.click(query=FindElement(by=By.ID, value="login-button"))
 
-            self.check_page_url(keyword="account/overview", step_name="se connecter")
-
             log(
                 f"✅ L'utilisateur s'est connecté avec succès : compte de {self.user.username} ! 🚀"
             )
@@ -54,6 +55,8 @@ class SpotifyPlaylist(SpotifyBase):
             raise RetryAgain(
                 "⚠️ Spotify a changé leur page de login aléatoirement. C'est normal que ça arrive ! 🔄🎵"
             )
+
+        self.check_page_url(keyword="account/overview", step_name="se connecter")
 
     def show_track_info(self):
         self.title = self.driver.find_element(
@@ -111,49 +114,6 @@ class SpotifyPlaylist(SpotifyBase):
             except NoSuchElementException:  # Last song is not playing
                 pass
 
-    def listen_to_random_artist(self):
-        self.log_step("sélection d'un artiste préféré 🎨✨")
-
-        random_artist = random.choice(settings.spotify_favorits_artists)
-
-        search_bar = WebDriverWait(self.driver, 180).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, "//*[@data-testid='search-input']")
-            )
-        )
-        self.fill_input(search_bar, random_artist)
-
-        if search_bar.get_attribute("value").strip() != random_artist.strip():
-            raise ValueError(
-                f"❌ Erreur : la saisie ne correspond pas à {random_artist} ! 🔄🎵"
-            )
-
-        sleep(self.delay_page_loading)
-
-        self.submit_form(
-            element=FindElement(
-                by=By.XPATH,
-                value="//div[@data-testid='infinite-scroll-list']//span[@role='presentation']",
-            ),
-            use_javascript=False,
-        )  # open artist page
-
-        self.check_page_url(keyword="artist")
-        self.play()
-
-    def choose_an_artist(self):
-        try:  # Check if Spotify displays a pop-up asking to choose favorite artists
-            self.driver.find_element(
-                By.XPATH,
-                '//*[@data-testid="popover"]//div[contains(@class, "encore-announcement-set")]',
-            )
-
-            log("L'application a demandé au bot de choisir son chanteur préféré 🤖🎤")
-        except NoSuchElementException:
-            return
-
-        self.listen_to_random_artist()
-
     def listening_step(self):
         self.get_page(self.track_url)
 
@@ -171,3 +131,4 @@ class SpotifyPlaylist(SpotifyBase):
     def action(self):
         self.login_step()
         self.listening_step()
+        self.logout()
