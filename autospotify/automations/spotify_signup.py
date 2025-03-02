@@ -12,7 +12,10 @@ from autospotify.utils.schemas import FindElement, User
 class SpotifySignup(SpotifyBase):
     def __init__(self, user: User):
         super().__init__(
-            user=user, base_url=settings.spotify_signup_url, captcha_solver_enabled=True
+            user=user,
+            base_url=settings.spotify_signup_url,
+            captcha_solver_enabled=True,
+            use_user_profile=True,
         )
 
     def username_step(self):
@@ -74,6 +77,13 @@ class SpotifySignup(SpotifyBase):
 
         check_terms_box()
 
+    def random_step(self):
+        """
+        Do a random stuff in account after account creation
+        """
+        self.get_page("https://open.spotify.com")
+        self.choose_an_artist()  # Chose a favorite artist if asked
+
     def action(self):
         self.username_step()
 
@@ -87,6 +97,8 @@ class SpotifySignup(SpotifyBase):
 
         self.check_page_url(keyword="download", step_name="accueil")
 
+        self.random_step()
+
         upsert_user(
             user=User(
                 username=self.user.username,
@@ -95,3 +107,5 @@ class SpotifySignup(SpotifyBase):
                 spotify_account_created="yes",
             ),
         )
+
+        self.logout()

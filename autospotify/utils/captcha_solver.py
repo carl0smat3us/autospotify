@@ -4,13 +4,15 @@ from chrome_extension import Extension
 
 
 class CaptchaSolver(Extension):
-    def __init__(self, api_key: str, download_dir: str):
+    def __init__(self, api_key: str, download_dir: str, enable_plugin_manually):
         super().__init__(
             extension_id="ifibfemgeogfhoebkmokieepdoobkbpo",
             extension_name="2captcha",
             download_dir=download_dir,
             api_key=api_key,
         )
+
+        self.enable_plugin_manually = enable_plugin_manually
 
     def update_files(self, api_key):
         def disable_plugin(content):
@@ -32,5 +34,10 @@ class CaptchaSolver(Extension):
         self.get_file(path.join("common", "config.js")).update_contents(
             update_captcha_solution
         )
-        self.get_file(path.join("common", "config.js")).update_contents(disable_plugin)
+
+        if self.enable_plugin_manually:
+            self.get_file(path.join("common", "config.js")).update_contents(
+                disable_plugin
+            )
+
         self.get_file(path.join("common", "config.js")).update_contents(update_api_key)

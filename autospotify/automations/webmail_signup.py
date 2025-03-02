@@ -1,33 +1,37 @@
 import random
-import re
 from time import sleep
 
+from faker import Faker
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support.ui import Select
 
 import autospotify.settings as settings
 from autospotify.exceptions import IpAddressError, RetryAgain
 from autospotify.utils.base.automation.webmail import WebmailBase
+from autospotify.utils.files import upsert_user
 from autospotify.utils.schemas import FindElement, User
+
+faker = Faker()
 
 
 class MailSignUp(WebmailBase):
     def __init__(self):
-        super().__init__(user=None, base_url=settings.webmail_signup_url)
-
-        username = f"""{self.faker.last_name().lower()}{self.faker.last_name().lower()}{self.faker.last_name().lower()}"""
-
-        password = self.faker.password(
-            length=15,
-            special_chars=True,
-            digits=True,
-            upper_case=True,
-            lower_case=True,
+        super().__init__(
+            user=User(
+                username=f"""{faker.last_name().lower()}{faker.last_name().lower()}{faker.last_name().lower()}""",
+                password=faker.password(
+                    length=15,
+                    special_chars=True,
+                    digits=True,
+                    upper_case=True,
+                    lower_case=True,
+                ),
+            ),
+            base_url=settings.webmail_signup_url,
+            captcha_solver_enabled=True,
         )
 
-        self.user = User(username=username, password=password)
         self.domain = None
 
         self.tab = None
@@ -166,12 +170,15 @@ class MailSignUp(WebmailBase):
     def finalize_creation_step(self):
         self.log_step("finalizer la creation du compte")
 
-        self.click(
-            query=FindElement(
-                by=By.CSS_SELECTOR,
-                value="[data-test='create-mailbox-create-button']",
-            ),
-        )
+        try:
+            self.click(
+                query=FindElement(
+                    by=By.CSS_SELECTOR,
+                    value="[data-test='create-mailbox-create-button']",
+                ),
+            )
+        except:
+            raise RetryAgain("⚠️ Impossible de céér un compte")
 
         sleep(5)
 
@@ -199,16 +206,18 @@ class MailSignUp(WebmailBase):
 
         self.recovery_step()
 
+        self.activate_captcha_solver()
+
         self.finalize_creation_step()
 
         self.activate_account_step()
 
         self.check_page_url(keyword="navigator-lxa.mail.com", step_name="accueil")
 
-        # upsert_user(
-        #     user=User(
-        #         username=f"{self.user.username}@{self.domain}",
-        #         password=self.user.password,
-        #         proxy_url=self.user.proxy_url
-        #     ),
-        # )
+        upsert_user(
+            user=User(
+                username=f"{self.user.username}@{self.domain}",
+                password=self.user.password,
+                proxy_url=self.user.proxy_url,
+            ),
+        )

@@ -34,6 +34,9 @@ from autospotify.utils.proxies import (get_user_ip,
                                        proxy_transformed_url_to_dict)
 from autospotify.utils.schemas import FindElement, User
 
+user_path = path.expanduser("~")
+profile_path = path.join(user_path, "AppData", "Local", "Google", "Chrome", "User Data")
+
 
 class Base(Form, Time):
     def __init__(
@@ -41,17 +44,22 @@ class Base(Form, Time):
         user: User,
         base_url: str,
         captcha_solver_enabled: bool,
+        enable_captcha_solver_manually=True,
         extensions: List[str] = [],
+        use_user_profile=False,
     ):
         self.faker = Faker()
 
         self.base_url = base_url
+
+        self.use_user_profile = use_user_profile
 
         self.retries = 0
         self.max_retries = 5
 
         self.user = user
 
+        self.enable_captcha_solver_manually = enable_captcha_solver_manually
         self.captcha_solver_enabled = captcha_solver_enabled
         self.captcha_solver_activated = False
 
@@ -62,13 +70,16 @@ class Base(Form, Time):
         self.browser_options = webdriver.ChromeOptions()
         self.browser_options.add_argument("--disable-logging")
         self.browser_options.add_argument("--log-level=3")
-        self.browser_options.add_argument("--disable-infobars")
         self.browser_options.add_argument("--window-size=1366,768")
         self.browser_options.add_argument("--start-maximized")
         self.browser_options.add_argument("--disable-notifications")
-        self.browser_options.add_argument(f"--user-agent={self.user_agent}")
         self.browser_options.add_argument("--disable-dev-shm-usage")
-        self.browser_options.add_argument("--disable-cookies")
+
+        if self.use_user_profile:
+            self.browser_options.add_argument(f"--user-data-dir={profile_path}")
+            self.browser_options.add_argument("--profile-directory=Default")
+        else:
+            self.browser_options.add_argument(f"--user-agent={self.user_agent}")
 
         if self.captcha_solver_enabled:
             self.browser_options.add_experimental_option(
@@ -81,6 +92,7 @@ class Base(Form, Time):
                 CaptchaSolver(
                     api_key="59edebcdb934c8e84078e0f6ff325ae6",
                     download_dir=settings.extensions_path,
+                    enable_plugin_manually=enable_captcha_solver_manually,
                 ).load()
             )
 
@@ -149,7 +161,7 @@ class Base(Form, Time):
         sleep(self.delay_start_interactions)
 
     def activate_captcha_solver(self):
-        if not self.captcha_solver_activated:
+        if not self.captcha_solver_activated and self.enable_captcha_solver_manually:
             if len(self.driver.window_handles) == 1:
                 # if the extension tab was'nt opened automatically open it
                 self.driver.switch_to.new_window("tab")
@@ -186,6 +198,8 @@ class Base(Form, Time):
                     log(
                         "✅ Connexion réussie à l'extension ! L'alerte a été détectée et fermée. 🚀"
                     )
+                    self.driver.close()
+
                 except NoAlertPresentException:
                     self.captcha_solver_activated = False
                     log("❌ Aucun message d'alerte trouvé.")
@@ -194,8 +208,7 @@ class Base(Form, Time):
                 self.captcha_solver_activated = False
                 log(f"Erreur lors de l'activation de l'extension: {str(e)}")
 
-            self.switch_back_to_main()
-            self.driver.refresh()
+            # self.switch_back_to_main()
             sleep(self.delay_page_loading)
 
     def get_page(self, url: str, is_first_request=False):
@@ -289,14 +302,15 @@ class Base(Form, Time):
             log("Les cookies ont été acceptés 🍪")
 
     def try_close_browser_popup(self):
-        self.log_step("fermer le popup (app link prompt)")
+        if "open.spotify" in self.driver.current_url:
+            self.log_step("fermer le popup (app link prompt)")
 
-        for _ in range(20):  # Juste pour s'assurer que le pop-up est bien fermé
-            keyboard.send("esc")
-            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
-            sleep(5)
+            for _ in range(20):  # Juste pour s'assurer que le pop-up est bien fermé
+                keyboard.send("esc")
+                self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+                sleep(5)
 
-        sleep(self.delay_start_interactions)
+            sleep(self.delay_start_interactions)
 
     def run_preveting_errors(self, run):
         def inner_function(*args, **kwargs):
@@ -322,8 +336,8 @@ class Base(Form, Time):
                     log("⚠️ Session invalide.", ERROR)
                     break
 
-                except ElementNotInteractableException:
-                    log("⚠️ L'élément n'est pas interactif.", ERROR)
+                except ElementNotInteractableException as e:
+                    log(f"⚠️ L'élément n'est pas interactif: {e}", ERROR)
                     break
 
                 except NoSuchWindowException:

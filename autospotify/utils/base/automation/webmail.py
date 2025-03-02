@@ -18,12 +18,14 @@ class WebmailBase(Base):
         base_url: str,
         extensions=[],
         captcha_solver_enabled=False,
+        enable_captcha_solver_manually=False,
     ):
         super().__init__(
             user=user,
             base_url=base_url,
             extensions=extensions,
             captcha_solver_enabled=captcha_solver_enabled,
+            enable_captcha_solver_manually=enable_captcha_solver_manually,
         )
 
     def log_mail_list(self, messages: List[MailBox]):
