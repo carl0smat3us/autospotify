@@ -1,4 +1,3 @@
-import random
 from time import sleep
 
 from selenium.common.exceptions import NoSuchElementException
@@ -7,7 +6,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 import autospotify.settings as settings
-from autospotify.exceptions import RetryAgain
 from autospotify.utils.base.automation.spotify import SpotifyBase
 from autospotify.utils.logs import log
 from autospotify.utils.schemas import FindElement, User
@@ -27,34 +25,40 @@ class SpotifyPlaylist(SpotifyBase):
         self.user_index = user_index
 
     def username_step(self):
+        self.log_step("taper le username")
         username_input = WebDriverWait(self.driver, 180).until(
             EC.visibility_of_element_located((By.ID, "login-username"))
         )
         self.fill_input(username_input, self.user.username)
 
     def password_step(self):
+        self.log_step("taper le mot de passe")
         password_input = self.driver.find_element(By.ID, "login-password")
         self.fill_input(password_input, self.user.password)
 
     def login_step(self):
-        try:
-            self.username_step()
+        self.username_step()
 
-            try:
+        try:
+            self.password_step()
+        except NoSuchElementException:  # When spotify changes the normal login flow
+            try:  # If spotify is asking a code try to connect with password and email
+                self.click(
+                    query=FindElement(
+                        by=By.XPATH, value="[data-encore-id='buttonTertiary']"
+                    )
+                )  # Connect with password
+                self.username_step()
                 self.password_step()
             except NoSuchElementException:
                 self.click(query=FindElement(by=By.ID, value="login-button"))
                 self.password_step()
 
-            self.click(query=FindElement(by=By.ID, value="login-button"))
+        self.click(query=FindElement(by=By.ID, value="login-button"))
 
-            log(
-                f"✅ L'utilisateur s'est connecté avec succès : compte de {self.user.username} ! 🚀"
-            )
-        except:
-            raise RetryAgain(
-                "⚠️ Spotify a changé leur page de login aléatoirement. C'est normal que ça arrive ! 🔄🎵"
-            )
+        log(
+            f"✅ L'utilisateur s'est connecté avec succès : compte de {self.user.username} ! 🚀"
+        )
 
         self.check_page_url(keyword="account/overview", step_name="se connecter")
 

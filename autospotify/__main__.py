@@ -82,7 +82,11 @@ def add_emails(spotify_accounts_created=False):
             print("❌ Ajout annulé.")
             break
 
-        user_found = read_user_from_json(username) or {}
+        user_found = read_user_from_json(username) or User(
+            username=username,
+            password=password,
+        )
+
         user = User(
             username=username,
             password=password,

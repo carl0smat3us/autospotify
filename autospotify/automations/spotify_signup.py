@@ -19,6 +19,8 @@ class SpotifySignup(SpotifyBase):
         )
 
     def username_step(self):
+        self.log_step("taper le username")
+
         username_input = self.driver.find_element(By.ID, "username")
         self.fill_input(username_input, self.user.username)
 
@@ -81,6 +83,8 @@ class SpotifySignup(SpotifyBase):
         """
         Do a random stuff in account after account creation
         """
+        self.log_step("faire une chose aléatoire")
+
         self.get_page("https://open.spotify.com")
         self.choose_an_artist()  # Chose a favorite artist if asked
 
