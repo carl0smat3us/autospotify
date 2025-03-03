@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  tests:
+  build:
     runs-on: windows-2022
 
     steps:
