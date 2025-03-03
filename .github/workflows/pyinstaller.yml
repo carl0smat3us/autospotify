@@ -10,7 +10,7 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-20.04
+    runs-on: windows-2022
 
     steps:
       - name: Checkout Code
