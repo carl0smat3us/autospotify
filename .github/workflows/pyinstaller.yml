@@ -1,0 +1,49 @@
+name: Build Executable with PyInstaller
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.12"
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v4
+
+      - name: Setup a local virtual environment (if no poetry.toml file)
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+
+      - name: Define a cache for the virtual environment based on the dependencies lock file
+        uses: actions/cache@v3
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+
+      - name: Install Dependencies
+        run: poetry install --no-root
+
+      - name: Build executable
+        run: poetry run task build
+      
+      - name: Upload executable as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: autospotify
+          path: dist/autospotify.exe
+
