@@ -80,6 +80,8 @@ class SpotifyBase(Base):
 
         force: Choose a random artist even though spotify isnt asking it
         """
+        self.log_step("choisir un artist aléatoire")
+
         try:
             self.driver.find_element(
                 By.XPATH,
@@ -93,6 +95,8 @@ class SpotifyBase(Base):
         self.listen_to_random_artist()
 
     def play(self, user_index=None):
+        self.log_step("jouer une chanson")
+
         playlist_songs = self.driver.find_element(
             By.XPATH,
             "//div[@role='row' and (@aria-selected='true' or @aria-selected='false')]",
@@ -143,6 +147,7 @@ class SpotifyBase(Base):
                 raise RetryAgain("Le résolveur de captcha n'a pas été activé")
 
     def logout(self):
+        self.log_step("se déconnecter")
         self.click(
             query=FindElement(
                 by=By.XPATH, value='//*[@data-testid="user-widget-link"]'

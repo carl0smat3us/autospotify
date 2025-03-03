@@ -282,6 +282,8 @@ class Base(Form, Time):
         self.driver.save_screenshot(screenshot_path)
 
     def submit_form(self, query: FindElement, use_javascript=False):
+        self.log_step("envoyer formulaire")
+
         self.click(query, use_javascript)
         self.verify_page()
 
