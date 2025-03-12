@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: [windows-2022, ubuntu-24.04]
+    runs-on: [windows-2022, ubuntu-latest]
 
     steps:
       - name: Checkout Code
