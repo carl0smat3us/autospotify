@@ -15,7 +15,7 @@ class SpotifySignup(SpotifyBase):
             user=user,
             base_url=settings.spotify_signup_url,
             captcha_solver_enabled=True,
-            use_user_profile=True,
+            use_own_profile=True,
             browser_type="microsoft-adge",
         )
 

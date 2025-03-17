@@ -20,7 +20,7 @@ class SpotifyBase(Base):
         base_url: str,
         extensions=[],
         captcha_solver_enabled=False,
-        use_user_profile=False,
+        use_own_profile=False,
         browser_type="chrome",
     ):
         super().__init__(
@@ -28,7 +28,7 @@ class SpotifyBase(Base):
             base_url=base_url,
             extensions=extensions,
             captcha_solver_enabled=captcha_solver_enabled,
-            use_user_profile=use_user_profile,
+            use_own_profile=use_own_profile,
             browser_type=browser_type,
         )
 

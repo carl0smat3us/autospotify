@@ -34,9 +34,6 @@ from autospotify.utils.proxies import (get_user_ip,
                                        proxy_transformed_url_to_dict)
 from autospotify.utils.schemas import FindElement, User
 
-user_path = path.expanduser("~")
-profile_path = path.join(user_path, "AppData", "Local", "Google", "Chrome", "User Data")
-
 
 class Base(Form, Time):
     def __init__(
@@ -46,13 +43,14 @@ class Base(Form, Time):
         captcha_solver_enabled: bool,
         enable_captcha_solver_manually=True,
         extensions: List[str] = [],
-        use_user_profile=False,
+        use_own_profile=False,
         browser_type: Literal["chrome", "microsoft-edge"] = "chrome",
     ):
         self.faker = Faker()
 
         self.base_url = base_url
-        self.use_user_profile = use_user_profile
+        self.use_own_profile = use_own_profile
+        self.browser_type = browser_type
         self.retries = 0
         self.max_retries = 5
         self.user = user
@@ -65,7 +63,7 @@ class Base(Form, Time):
         self.proxies = read_proxies_from_txt()
         self.ip = get_user_ip()
 
-        if browser_type == "chrome":
+        if self.browser_type == "chrome":
             self.browser_options = webdriver.ChromeOptions()
         else:
             self.browser_options = webdriver.EdgeOptions()
@@ -77,8 +75,17 @@ class Base(Form, Time):
         self.browser_options.add_argument("--disable-notifications")
         self.browser_options.add_argument("--disable-dev-shm-usage")
 
-        if self.use_user_profile:
-            self.browser_options.add_argument(f"--user-data-dir={profile_path}")
+        if self.use_own_profile:
+            if self.browser_type == "chrome":
+                profile_path = path.join(
+                    path.expanduser("~"),
+                    "AppData",
+                    "Local",
+                    "Google",
+                    "Chrome",
+                    "User Data",
+                )
+                self.browser_options.add_argument(f"--user-data-dir={profile_path}")
             self.browser_options.add_argument("--profile-directory=Default")
         else:
             self.browser_options.add_argument(f"--user-agent={self.user_agent}")
@@ -133,8 +140,7 @@ class Base(Form, Time):
                 ).load()
             )
 
-        # **Aqui aplicamos corretamente o `browser_type`**
-        if browser_type == "chrome":
+        if self.browser_type:
             self.driver = (
                 uc.Chrome(options=self.browser_options)
                 if not self.captcha_solver_enabled
