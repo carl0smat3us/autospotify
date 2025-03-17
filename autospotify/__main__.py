@@ -40,6 +40,7 @@ faker = Faker()
 logo = text2art("autospotify")
 load_dotenv()
 
+
 def stop_all_chrome_process():
     action = input("\nPour avoir une mieux experience avec cette ")
 

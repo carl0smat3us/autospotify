@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: [windows-2022, ubuntu-latest]
+    runs-on: windows-2022
 
     steps:
       - name: Checkout Code
@@ -46,4 +46,3 @@ jobs:
         with:
           name: autospotify
           path: dist/autospotify.exe
-
