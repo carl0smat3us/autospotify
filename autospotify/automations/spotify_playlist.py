@@ -42,16 +42,17 @@ class SpotifyPlaylist(SpotifyBase):
         try:
             self.password_step()
         except NoSuchElementException:  # When spotify changes the normal login flow
+            self.click(query=FindElement(by=By.ID, value="login-button"))
+
             try:  # If spotify is asking a code try to connect with password and email
                 self.click(
                     query=FindElement(
-                        by=By.XPATH, value="[data-encore-id='buttonTertiary']"
+                        by=By.XPATH, value="//*[@data-encore-id='buttonTertiary']"
                     )
                 )  # Connect with password
                 self.username_step()
                 self.password_step()
             except NoSuchElementException:
-                self.click(query=FindElement(by=By.ID, value="login-button"))
                 self.password_step()
 
         self.click(query=FindElement(by=By.ID, value="login-button"))

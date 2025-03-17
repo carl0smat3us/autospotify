@@ -21,6 +21,7 @@ class SpotifyBase(Base):
         extensions=[],
         captcha_solver_enabled=False,
         use_user_profile=False,
+        browser_type="chrome",
     ):
         super().__init__(
             user=user,
@@ -28,6 +29,7 @@ class SpotifyBase(Base):
             extensions=extensions,
             captcha_solver_enabled=captcha_solver_enabled,
             use_user_profile=use_user_profile,
+            browser_type=browser_type,
         )
 
     def listen_to_random_artist(self, force=False):

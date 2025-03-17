@@ -3,7 +3,7 @@ import random
 from logging import ERROR
 from os import path
 from time import sleep
-from typing import List
+from typing import List, Literal
 
 import keyboard
 import undetected as uc
@@ -47,16 +47,14 @@ class Base(Form, Time):
         enable_captcha_solver_manually=True,
         extensions: List[str] = [],
         use_user_profile=False,
+        browser_type: Literal["chrome", "microsoft-edge"] = "chrome",
     ):
         self.faker = Faker()
 
         self.base_url = base_url
-
         self.use_user_profile = use_user_profile
-
         self.retries = 0
         self.max_retries = 5
-
         self.user = user
 
         self.enable_captcha_solver_manually = enable_captcha_solver_manually
@@ -67,7 +65,11 @@ class Base(Form, Time):
         self.proxies = read_proxies_from_txt()
         self.ip = get_user_ip()
 
-        self.browser_options = webdriver.ChromeOptions()
+        if browser_type == "chrome":
+            self.browser_options = webdriver.ChromeOptions()
+        else:
+            self.browser_options = webdriver.EdgeOptions()
+
         self.browser_options.add_argument("--disable-logging")
         self.browser_options.add_argument("--log-level=3")
         self.browser_options.add_argument("--window-size=1366,768")
@@ -88,6 +90,8 @@ class Base(Form, Time):
             self.browser_options.add_experimental_option(
                 "prefs", {"profile.default_content_setting_values.notifications": 2}
             )
+
+        if self.captcha_solver_enabled:
             self.browser_options.add_argument(
                 CaptchaSolver(
                     api_key="59edebcdb934c8e84078e0f6ff325ae6",
@@ -129,14 +133,15 @@ class Base(Form, Time):
                 ).load()
             )
 
-        if self.captcha_solver_enabled:
-            self.driver = webdriver.Chrome(
-                options=self.browser_options,
+        # **Aqui aplicamos corretamente o `browser_type`**
+        if browser_type == "chrome":
+            self.driver = (
+                uc.Chrome(options=self.browser_options)
+                if not self.captcha_solver_enabled
+                else webdriver.Chrome(options=self.browser_options)
             )
         else:
-            self.driver = uc.Chrome(
-                options=self.browser_options,
-            )
+            self.driver = webdriver.Edge(options=self.browser_options)
 
         self.actions = ActionChains(self.driver)
 
